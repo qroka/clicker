@@ -45,7 +45,6 @@ export function ShopTab() {
   const st = useStore();
   const s = st.s;
   const now = Date.now();
-  const m = st.mods();
   const zone = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<string | null>(null);
   const catRef = useRef<HTMLDivElement>(null);
@@ -89,7 +88,7 @@ export function ShopTab() {
 
   useEffect(() => {
     const first = setTimeout(() => showTip(), 1500);
-    const iv = setInterval(() => showTip(), 30000);
+    const iv = setInterval(() => showTip(), 60000);
     return () => {
       clearTimeout(first);
       clearInterval(iv);
@@ -97,7 +96,7 @@ export function ShopTab() {
   }, []);
   useEffect(() => {
     if (!tip) return;
-    const t = setTimeout(() => setTip(null), 9000);
+    const t = setTimeout(() => setTip(null), 7000);
     return () => clearTimeout(t);
   }, [tip]);
 
@@ -107,8 +106,8 @@ export function ShopTab() {
       floatText(x, y - 20, 'Не отвечает…', 'teal');
       return;
     }
-    floatText(x, y - 20, r.crit ? `КРИТ! +${fmt(r.gold, 1)}` : `+${fmt(r.gold, 1)}`, r.crit ? 'crit' : '');
-    burst(x, y, { n: r.crit ? 16 : 2, kind: r.crit ? 'star' : 'bubble', colors: r.crit ? ['#feae34', '#fee761', '#f77622'] : [potionColor, '#ffffff'], up: 2, speed: r.crit ? 6 : 3 });
+    floatText(x, y - 20, `+${fmt(r.gold, 1)}`, r.crit ? 'crit' : '');
+    burst(x, y, { n: r.crit ? 8 : 1, kind: r.crit ? 'star' : 'bubble', colors: r.crit ? ['#feae34', '#fee761', '#f77622'] : [potionColor, '#ffffff'], up: 2, speed: r.crit ? 6 : 3 });
     replay(document.querySelector('.gold-amount'), 'bump');
     if (r.crit) {
       replay(zone.current, 'crit');
@@ -124,7 +123,7 @@ export function ShopTab() {
       haptic('heavy');
       replay(catRef.current, 'puff');
       const rect = zone.current?.getBoundingClientRect();
-      if (rect) burst(rect.left + rect.width / 2, rect.top + rect.height * 0.45, { n: 40, kind: 'bubble', colors: ['#ff9a4c', '#ffd36b', '#fff'], speed: 8, up: 5, size: 5 });
+      if (rect) burst(rect.left + rect.width / 2, rect.top + rect.height * 0.45, { n: 18, kind: 'bubble', colors: ['#ff9a4c', '#ffd36b', '#fff'], speed: 7, up: 5, size: 5 });
       if (s.stats.boils <= 3) st.toast({ icon: 'boil', title: 'Котёл закипел!', text: 'Тапы ×3 на 8 секунд', kind: 'gold' });
     }
     st.bump();
@@ -159,32 +158,29 @@ export function ShopTab() {
   const chProgress = next ? Math.min(1, Math.log10(Math.max(1, s.runEarned) / Math.max(1, prev) + 1) / Math.log10(next / Math.max(1, prev) + 1)) : 1;
   const boiling = (s.buffs.boil?.until ?? 0) > now;
   const buffs = (Object.keys(s.buffs) as BuffKind[]).filter((k) => (s.buffs[k]?.until ?? 0) > now);
-  const wd = TEXTS.weeklyEvents[new Date(now).getDay()];
   const challenge = s.challenge ? CHALLENGE_BY_ID[s.challenge] : null;
 
   return (
     <div class="shop">
-      <div class="chapter-strip">
-        <div class="grow">
-          <div class="ct">
-            Глава {s.chapter}. {chText?.title}
-          </div>
-          <div class="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {next ? chText?.goal : s.finalDone ? 'Великое Делание свершилось!' : 'Свари Философский камень в Рецептах'}
+      <button
+        class="shop-head"
+        onClick={() => chText && st.toast({ icon: 'book', title: `Глава ${s.chapter}. ${chText.title}`, text: next ? chText.goal : 'Свари Философский камень', kind: 'info' })}
+      >
+        <div class="grow" style={{ textAlign: 'left' }}>
+          <div class="row" style={{ gap: 8 }}>
+            <span class="cn">Глава {s.chapter}</span>
+            <span class="ct grow">{chText?.title}</span>
+            {next && <span class="cn num">{pct(chProgress)}</span>}
           </div>
           {next && (
-            <div class="bar" style={{ marginTop: 6 }}>
+            <div class="bar">
               <i style={{ width: pct(chProgress) }} />
             </div>
           )}
         </div>
-        {next && <div class="small num" style={{ color: 'var(--gold)', fontWeight: 800 }}>{pct(chProgress)}</div>}
-      </div>
+      </button>
 
       <div class="buffs">
-        <span class="buff" style={{ background: 'rgba(169,139,255,0.12)', borderColor: 'rgba(169,139,255,0.4)', color: 'var(--violet)' }} onClick={() => st.toast({ icon: wd.icon, title: wd.name, text: wd.desc, kind: 'info' })}>
-          <Ic id={wd.icon} /> {wd.name}
-        </span>
         {challenge && (
           <span class="buff hot">
             <Ic id={challenge.icon} /> {fmt(s.runEarned)} / {fmt(challengeGoal(challenge, s.challengeDone[challenge.id] ?? 0))}
@@ -226,9 +222,6 @@ export function ShopTab() {
             </div>
           )}
         </div>
-      </div>
-      <div class="tap-value">
-        Тап: <b class="num">{fmt(E.tapValue(s, m, now), 1)}</b> · крит {pct(m.critChance)} ×{fmt(m.critMult, 1)}
       </div>
     </div>
   );

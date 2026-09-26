@@ -1,0 +1,817 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ЧИСТАЯ ТЕМА. Пиксель-арт — только в спрайтах (котёл, кот, герои, иконки).
+   Интерфейс: плоские поверхности, мягкие скругления, тонкие границы,
+   системный шрифт SF Pro Rounded. Никаких свечений и тяжёлых рамок.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg0: #15111f;
+  --bg1: #1b1628;
+  --bg2: #241d35;
+  --card: #1f1a2e;
+  --card-hi: #2a2340;
+  --line: rgba(255, 255, 255, 0.06);
+  --line-hi: rgba(255, 255, 255, 0.14);
+  --text: #f4f0fb;
+  --muted: #a9a1bf;
+  --dim: #6f6887;
+  --gold: #ffcb52;
+  --gold2: #ffb530;
+  --teal: #5fd6a4;
+  --violet: #a78bfa;
+  --rose: #fb7185;
+  --green: #5fd6a4;
+  --red: #f87171;
+  --r-common: #9aa4b8;
+  --r-rare: #4fa8ff;
+  --r-epic: #c084fc;
+  --r-legendary: #ffb530;
+  --radius: 16px;
+  --tab-h: 58px;
+  --font-ui: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-title: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+html,
+body {
+  background: var(--bg0);
+  font-size: 15px;
+  letter-spacing: 0;
+}
+
+/* ─── Пиксельные спрайты ─── */
+img.px {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: inline-block;
+  flex: none;
+}
+img.px.ic,
+.px-missing.ic {
+  vertical-align: -3px;
+  margin: 0 1px;
+}
+.px-missing {
+  display: inline-grid;
+  place-items: center;
+  background: var(--card-hi);
+  color: var(--dim);
+  font-size: 10px;
+  border-radius: 4px;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-title);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Фон: спокойный, без полос ─── */
+.backdrop {
+  background:
+    radial-gradient(70% 38% at 50% 52%, color-mix(in srgb, var(--potion) 9%, transparent), transparent 70%),
+    var(--bg0);
+}
+.backdrop::after {
+  background-image: none;
+  width: 2px;
+  height: 2px;
+  inset: auto;
+  top: 0;
+  left: 0;
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow:
+    40px 90px rgba(255, 255, 255, 0.35),
+    130px 170px rgba(255, 255, 255, 0.25),
+    220px 60px rgba(255, 255, 255, 0.4),
+    330px 140px rgba(255, 255, 255, 0.3),
+    370px 40px rgba(255, 255, 255, 0.25),
+    70px 260px rgba(255, 255, 255, 0.2),
+    290px 290px rgba(255, 255, 255, 0.25),
+    20px 380px rgba(255, 255, 255, 0.2),
+    360px 420px rgba(255, 255, 255, 0.2);
+  animation: twinkle 3s ease-in-out infinite alternate;
+}
+
+/* ─── Шапка ─── */
+.topbar {
+  background: none;
+  padding: calc(var(--sat) + 10px) 16px 6px;
+  gap: 8px;
+}
+.gold-amount {
+  font-size: 30px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--gold);
+  text-shadow: none;
+  gap: 8px;
+}
+.gold-amount .coin {
+  width: 28px;
+  height: 28px;
+}
+.gps {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 600;
+}
+.gps b {
+  color: var(--text);
+}
+.chips {
+  flex-direction: row;
+  gap: 6px;
+}
+.chip,
+.chips .chip {
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 0;
+  font-size: 13px;
+  font-weight: 700;
+  gap: 5px;
+}
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+.icon-btn:active {
+  background: var(--card);
+  transform: scale(0.94);
+}
+.badge {
+  top: 0;
+  right: 0;
+  min-width: 17px;
+  height: 17px;
+  font-size: 11px;
+  background: var(--rose);
+  box-shadow: 0 0 0 2px var(--bg0);
+  animation: none;
+}
+.dot-badge {
+  top: 8px;
+  right: calc(50% - 16px);
+  width: 8px;
+  height: 8px;
+  background: var(--rose);
+  box-shadow: 0 0 0 2px var(--bg1);
+}
+
+/* ─── Основная область и таббар (как в iOS: во всю ширину, у нижнего края) ─── */
+.main {
+  padding: 4px 16px calc(var(--tab-h) + var(--sab) + 20px);
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+.main.no-scroll {
+  padding-bottom: calc(var(--tab-h) + var(--sab) + 8px);
+}
+.tabbar {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--tab-h) + var(--sab));
+  padding-bottom: var(--sab);
+  border-radius: 0;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: rgba(21, 17, 31, 0.96);
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.tab {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--dim);
+  gap: 3px;
+}
+.tab .ti {
+  filter: grayscale(1) brightness(0.7);
+  transition: filter 0.15s;
+}
+.tab.active {
+  color: var(--text);
+}
+.tab.active .ti {
+  filter: none;
+  transform: none;
+}
+.tab.active::before {
+  display: none;
+}
+.tab.locked {
+  opacity: 0.4;
+}
+
+/* ─── Карточки ─── */
+.card,
+.gen,
+.upg,
+.hero-card,
+.exp-slot,
+.pick,
+.recipe,
+.quest,
+.challenge,
+.talent,
+.cal-day,
+.ach,
+.event-banner,
+.stone-hero {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: none;
+}
+.section-title {
+  margin: 20px 2px 10px;
+}
+.section-title h2 {
+  font-size: 20px;
+  color: var(--text);
+}
+.section-title small {
+  color: var(--dim);
+  font-weight: 600;
+}
+
+/* ─── Кнопки ─── */
+.btn {
+  border-radius: 12px;
+  padding: 10px 14px;
+  font-weight: 800;
+  font-size: 14px;
+  color: #2b1a00;
+  background: var(--gold);
+  border: 0;
+  box-shadow: none;
+}
+.btn:active {
+  transform: scale(0.97);
+  box-shadow: none;
+}
+.btn.teal {
+  color: #062a1c;
+  background: var(--teal);
+  box-shadow: none;
+}
+.btn.violet {
+  color: #fff;
+  background: #8b5cf6;
+  box-shadow: none;
+}
+.btn.ghost {
+  color: var(--text);
+  background: var(--card-hi);
+  border: 0;
+  box-shadow: none;
+}
+.btn.disabled,
+.btn:disabled {
+  color: var(--dim);
+  background: var(--card-hi);
+  box-shadow: none;
+  filter: none;
+}
+.btn.big {
+  padding: 14px 18px;
+  border-radius: 14px;
+  font-size: 16px;
+}
+.seg {
+  background: var(--card);
+  border: 0;
+  border-radius: 12px;
+  padding: 3px;
+}
+.seg button {
+  border-radius: 9px;
+  min-height: 34px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.seg button.on {
+  background: var(--card-hi);
+  color: var(--text);
+  box-shadow: none;
+}
+
+/* Полоски прогресса — тонкие */
+.bar {
+  height: 6px;
+  border-radius: 99px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 0;
+  box-shadow: none;
+}
+.bar > i,
+.bar.teal > i,
+.bar.violet > i {
+  border-radius: 99px;
+}
+.bar > i {
+  background: var(--gold);
+}
+.bar.teal > i {
+  background: var(--teal);
+}
+.bar.violet > i {
+  background: var(--violet);
+}
+.gen .bar {
+  height: 4px;
+  margin-top: 7px;
+}
+
+/* ─── Лавка ─── */
+.shop-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 2px 0;
+}
+.shop-head .ct {
+  font-weight: 800;
+  font-size: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.shop-head .cn {
+  color: var(--dim);
+  font-weight: 700;
+  font-size: 13px;
+}
+.shop-head .bar {
+  margin-top: 6px;
+}
+.buffs {
+  min-height: 0;
+  margin-top: 10px;
+  gap: 6px;
+}
+.buff {
+  min-height: 28px;
+  padding: 3px 10px 3px 6px;
+  border-radius: 999px;
+  border: 0;
+  background: var(--card);
+  color: var(--text);
+  font-size: 12.5px;
+  font-weight: 700;
+  gap: 5px;
+}
+.buff.hot {
+  background: rgba(251, 146, 60, 0.16);
+  color: #fdba74;
+}
+.buff.gold {
+  background: rgba(255, 203, 82, 0.14);
+  color: var(--gold);
+}
+
+.pixel-cauldron {
+  position: relative;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+}
+.pixel-cauldron .pot {
+  position: relative;
+  transition: transform 0.08s ease-out;
+}
+.pixel-cauldron.squish .pot {
+  transform: scale(1.03, 0.95) translateY(2%);
+}
+.pixel-cauldron.boiling .pot {
+  animation: shake 0.12s linear infinite;
+}
+.pixel-cauldron .fire {
+  margin-top: -6px;
+}
+.pixel-cauldron .glow {
+  display: none;
+}
+.pixel-cauldron .pbub {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background: var(--potion);
+  top: 24%;
+  opacity: 0;
+  animation: pbub 2s ease-out infinite;
+  pointer-events: none;
+}
+.boiling .pbub {
+  animation-duration: 0.7s;
+}
+@keyframes pbub {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-60px);
+    opacity: 0;
+  }
+}
+.heat {
+  display: flex;
+  gap: 3px;
+  margin-top: 12px;
+}
+.heat i {
+  width: 16px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.08);
+}
+.heat i.on {
+  background: #fb923c;
+}
+.boiling .heat i {
+  background: #f87171;
+}
+
+.cat-body {
+  animation: none;
+}
+.bubble {
+  background: var(--card-hi);
+  color: var(--text);
+  border: 0;
+  border-radius: 14px 14px 14px 4px;
+  box-shadow: none;
+  font-weight: 600;
+  font-size: 13.5px;
+  max-width: 230px;
+}
+.tap-hint {
+  color: var(--muted);
+  font-weight: 700;
+}
+.cauldron-zone.crit::after {
+  background: radial-gradient(circle at 50% 45%, rgba(255, 203, 82, 0.18), transparent 55%);
+}
+
+.wisp {
+  background: none;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+}
+.wisp::after {
+  inset: -6px;
+  border: 2px dashed rgba(255, 203, 82, 0.5);
+}
+
+.float-num {
+  font-weight: 900;
+  font-size: 22px;
+  color: var(--gold);
+  text-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.55),
+    0 0 1px rgba(0, 0, 0, 0.8);
+}
+.float-num.crit {
+  font-size: 28px;
+  color: #fdba74;
+}
+
+/* ─── Мастерская ─── */
+.gen {
+  padding: 10px 12px;
+  gap: 12px;
+}
+.gen.can {
+  border-color: rgba(255, 203, 82, 0.28);
+  background: var(--card);
+}
+.gen-icon,
+.loc-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: var(--bg1);
+  border: 0;
+  box-shadow: none;
+}
+.gen-icon .owned {
+  bottom: -5px;
+  right: -5px;
+  border-radius: 8px;
+  background: var(--bg2);
+  border: 0;
+  box-shadow: 0 0 0 2px var(--card);
+  color: var(--text);
+  font-size: 11px;
+}
+.gen-name {
+  font-size: 15px;
+  font-weight: 800;
+}
+.gen .btn {
+  min-width: 84px;
+  padding: 9px 10px;
+  font-size: 14px;
+}
+.upg {
+  width: 124px;
+  gap: 5px;
+}
+.upg.can {
+  border-color: rgba(255, 203, 82, 0.35);
+  box-shadow: none;
+}
+.upg .un {
+  font-size: 13px;
+  font-weight: 800;
+}
+.upg .ud {
+  color: var(--teal);
+  font-weight: 700;
+}
+
+/* ─── Гильдия ─── */
+.hero-card {
+  padding: 12px 6px 10px;
+  gap: 6px;
+}
+.portrait {
+  --c: var(--r-common);
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--c) 16%, var(--bg1));
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--c) 70%, transparent);
+  overflow: hidden;
+  align-items: end;
+  clip-path: none;
+  margin: 0;
+}
+.portrait.lg {
+  width: 112px;
+  height: 112px;
+  border-radius: 22px;
+}
+.portrait.sm {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+}
+.portrait.locked {
+  filter: grayscale(1) brightness(0.45);
+}
+.portrait.busy::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  top: 5px;
+  right: 5px;
+  border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 0 2px var(--card);
+}
+.hero-card .hn {
+  font-size: 12.5px;
+  font-weight: 800;
+  min-height: 0;
+}
+.hero-card .hl {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: var(--muted);
+}
+.hero-card .rarity {
+  display: none;
+}
+.hero-card .can-up {
+  top: 8px;
+  right: 8px;
+  background: var(--teal);
+  color: #062a1c;
+  box-shadow: 0 0 0 2px var(--card);
+  animation: none;
+}
+.rarity {
+  border: 0;
+  border-radius: 6px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.pick {
+  border: 1.5px solid var(--line);
+}
+.pick.on {
+  border-color: var(--gold);
+  background: rgba(255, 203, 82, 0.08);
+}
+.exp-slot.ready {
+  border-color: rgba(95, 214, 164, 0.4);
+  background: var(--card);
+}
+
+/* ─── Лаборатория ─── */
+.ing {
+  border-radius: 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+}
+.ing .cnt {
+  font-weight: 800;
+  text-shadow: 0 1px 2px #000;
+}
+.brew-slot {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  border: 1.5px dashed var(--line-hi);
+  background: var(--bg1);
+}
+.brew-slot.filled {
+  border-style: solid;
+  border-color: var(--teal);
+  box-shadow: none;
+}
+.flask {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--bg1);
+  border: 0;
+  box-shadow: none;
+}
+.flask.unknown {
+  color: var(--dim);
+  font-weight: 900;
+}
+
+/* ─── Знания ─── */
+.stone-hero {
+  padding: 20px 16px;
+}
+.stone-gem {
+  animation: none;
+  filter: none;
+}
+.talent {
+  padding: 10px 4px;
+}
+.talent.can {
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: none;
+}
+.talent.maxed {
+  border-color: rgba(255, 203, 82, 0.4);
+}
+.talent-col h3 {
+  font-size: 13px;
+  color: var(--muted);
+}
+.talent-col .link {
+  width: 2px;
+  background: var(--line-hi);
+}
+.challenge.active {
+  border-color: rgba(251, 113, 133, 0.5);
+  background: var(--card);
+}
+.pips i {
+  border-radius: 50%;
+}
+
+/* ─── Шторки, модалки, диалоги, тосты ─── */
+.scrim {
+  background: rgba(8, 6, 14, 0.6);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.sheet {
+  background: var(--bg1);
+  border: 0;
+  border-radius: 22px 22px 0 0;
+  box-shadow: none;
+}
+.sheet-head h2 {
+  font-size: 20px;
+  color: var(--text);
+}
+.modal {
+  background: var(--bg1);
+  border: 1px solid var(--line-hi);
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+.modal h2 {
+  font-size: 22px;
+  color: var(--text);
+}
+.modal .big-emoji {
+  filter: none;
+  display: grid;
+  place-items: center;
+}
+.rays {
+  display: none;
+}
+.dialogue .dtitle {
+  color: var(--text);
+  font-size: 18px;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+}
+.dialogue .dbox {
+  background: var(--bg2);
+  color: var(--text);
+  border: 1px solid var(--line-hi);
+  border-radius: 20px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+}
+.dialogue .dspeaker {
+  background: var(--card-hi);
+  color: var(--gold);
+  border: 0;
+  box-shadow: none;
+}
+.dialogue .dspeaker span {
+  width: 52px;
+  height: 52px;
+  margin: -12px 0 -6px -2px;
+  border-radius: 14px;
+  background: var(--bg1);
+  box-shadow: inset 0 0 0 2px var(--line-hi);
+  overflow: hidden;
+}
+.dialogue .dtext {
+  font-size: 16px;
+  font-weight: 600;
+}
+.dialogue .dnext {
+  color: var(--muted);
+}
+.toast {
+  background: var(--bg2);
+  border: 1px solid var(--line-hi);
+  border-radius: 14px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.toast.toast-ach {
+  border-color: rgba(255, 203, 82, 0.4);
+}
+.cal-day {
+  border-radius: 12px;
+}
+.cal-day.today {
+  border-color: var(--gold);
+  background: rgba(255, 203, 82, 0.1);
+  box-shadow: none;
+}
+.event-banner {
+  background: var(--card);
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+.toggle.on {
+  background: var(--teal);
+}
+
+/* Таббар непрозрачный; валюты столбиком, чтобы крупное число золота не наезжало */
+.tabbar {
+  background: var(--bg0);
+}
+.chips {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.chip,
+.chips .chip {
+  padding: 3px 9px;
+  font-size: 12.5px;
+}
+.gold-amount {
+  font-size: clamp(24px, 7.2vw, 30px);
+}
+.gold-block {
+  min-width: 0;
+}
+
+/* Без свечения при начислении золота — только лёгкий «прыжок» числа */
+@keyframes num-pop {
+  40% {
+    transform: scale(1.05);
+  }
+}

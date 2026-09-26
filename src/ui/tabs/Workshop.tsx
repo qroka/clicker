@@ -87,7 +87,6 @@ export function WorkshopTab() {
           const amount = st.buyAmount === 'max' ? Math.max(1, E.maxAffordable(s, m, g.id)) : st.buyAmount;
           const cost = E.genCost(s, m, g.id, amount);
           const can = available && cost <= s.gold;
-          const prodEach = g.baseProd * m.gen[g.id] * m.prod;
           const total = E.genProd(s, m, g.id);
           const nextMs = MILESTONES.find((x) => x > owned);
           const prevMs = [...MILESTONES].reverse().find((x) => x <= owned) ?? 0;
@@ -119,7 +118,7 @@ export function WorkshopTab() {
                 <div class="gen-sub">
                   {owned > 0 ? (
                     <>
-                      <b class="num">{fmt(total, 1)}</b>/с · {fmt(prodEach, 1)} за шт.
+                      <b class="num">{fmt(total, 1)}</b> в сек{nextMs ? ` · ×2 на ${nextMs}` : ''}
                     </>
                   ) : (
                     txt.desc
@@ -141,9 +140,7 @@ export function WorkshopTab() {
                 <span class="cost num">
                   <Ic id="coin" /> {fmt(cost)}
                 </span>
-                <small>
-                  +{amount} {nextMs && owned > 0 ? `· ×2 на ${nextMs}` : ''}
-                </small>
+                {amount !== 1 && <small>×{amount}</small>}
               </button>
             </div>
           );

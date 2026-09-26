@@ -1,19 +1,13 @@
 import { render } from 'preact';
 import { App } from './ui/App';
-import '@fontsource/tiny5/index.css';
-import '@fontsource/press-start-2p/index.css';
 import './styles/main.css';
-import './styles/pixel.css';
+import './styles/clean.css';
 
-// Высота сцены. В iOS-PWA (black-translucent) window.innerHeight бывает меньше экрана
-// на высоту статус-бара — тогда в портрете берём полную высоту экрана.
+// Высота сцены = реально видимая область окна. Статус-бар непрозрачный (black),
+// поэтому игра не заходит под него и не обрезается снизу.
 function updateAppHeight() {
-  const nav = navigator as Navigator & { standalone?: boolean };
-  const standalone = nav.standalone === true || matchMedia('(display-mode: standalone)').matches;
-  const portrait = window.innerHeight >= window.innerWidth;
-  let h = window.innerHeight;
-  if (standalone && portrait && /iPhone|iPod/.test(navigator.userAgent)) h = Math.max(h, window.screen.height);
-  document.documentElement.style.setProperty('--app-h', `${h}px`);
+  const h = window.visualViewport?.height ?? window.innerHeight;
+  document.documentElement.style.setProperty('--app-h', `${Math.round(h)}px`);
 }
 updateAppHeight();
 window.addEventListener('resize', updateAppHeight);
