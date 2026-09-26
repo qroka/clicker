@@ -135,8 +135,8 @@ export function attachCanvas(el: HTMLCanvasElement) {
   c2d = el.getContext('2d');
   const resize = () => {
     dpr = Math.min(3, window.devicePixelRatio || 1);
-    el.width = window.innerWidth * dpr;
-    el.height = window.innerHeight * dpr;
+    el.width = (el.clientWidth || window.innerWidth) * dpr;
+    el.height = (el.clientHeight || window.innerHeight) * dpr;
   };
   resize();
   window.addEventListener('resize', resize);

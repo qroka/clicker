@@ -19,7 +19,7 @@ export function Cauldron({ heat, boiling, onTap }: Props) {
     timer.current = window.setTimeout(() => setSquish(false), 90);
   };
 
-  const R = 47;
+  const R = 44;
   const C = 2 * Math.PI * R;
   const heatFrac = boiling ? 1 : heat / 100;
 
@@ -33,18 +33,19 @@ export function Cauldron({ heat, boiling, onTap }: Props) {
             <stop offset="1" stop-color="#ff5a3c" />
           </linearGradient>
         </defs>
-        <circle cx="50" cy="50" r={R} fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2.2" />
+        <circle cx="50" cy="55" r={R} fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="2.2" />
         <circle
           cx="50"
-          cy="50"
+          cy="55"
           r={R}
           fill="none"
           stroke="url(#heatG)"
           stroke-width="2.6"
           stroke-linecap="round"
           stroke-dasharray={`${C * heatFrac} ${C}`}
-          transform="rotate(-90 50 50)"
-          style={{ transition: 'stroke-dasharray 0.15s', filter: heatFrac > 0.02 ? 'drop-shadow(0 0 3px #ff8a3c)' : 'none' }}
+          transform="rotate(-90 50 55)"
+          opacity={heatFrac > 0.01 ? 1 : 0}
+          style={{ transition: 'stroke-dasharray 0.15s, opacity 0.2s', filter: heatFrac > 0.02 ? 'drop-shadow(0 0 3px #ff8a3c)' : 'none' }}
         />
       </svg>
       <svg viewBox="0 0 200 200">

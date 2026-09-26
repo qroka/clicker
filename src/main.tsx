@@ -2,6 +2,20 @@ import { render } from 'preact';
 import { App } from './ui/App';
 import './styles/main.css';
 
+// Высота сцены. В iOS-PWA (black-translucent) window.innerHeight бывает меньше экрана
+// на высоту статус-бара — тогда в портрете берём полную высоту экрана.
+function updateAppHeight() {
+  const nav = navigator as Navigator & { standalone?: boolean };
+  const standalone = nav.standalone === true || matchMedia('(display-mode: standalone)').matches;
+  const portrait = window.innerHeight >= window.innerWidth;
+  let h = window.innerHeight;
+  if (standalone && portrait && /iPhone|iPod/.test(navigator.userAgent)) h = Math.max(h, window.screen.height);
+  document.documentElement.style.setProperty('--app-h', `${h}px`);
+}
+updateAppHeight();
+window.addEventListener('resize', updateAppHeight);
+window.addEventListener('orientationchange', () => setTimeout(updateAppHeight, 300));
+
 render(<App />, document.getElementById('root')!);
 
 // Не даём iOS зумить двойным тапом и жестами.

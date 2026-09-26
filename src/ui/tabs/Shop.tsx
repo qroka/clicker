@@ -197,7 +197,7 @@ export function ShopTab() {
 
       <div class="cauldron-zone" ref={zone}>
         <Cauldron heat={s.heat} boiling={boiling} onTap={onTap} />
-        {s.stats.taps < 15 && <div class="tap-hint">👆 Стучи по котлу!</div>}
+        {s.stats.taps < 15 && !tip && <div class="tap-hint">👆 Стучи по котлу!</div>}
         {s.wisp && (
           <button
             class={`wisp ${s.wisp.expires - now < 3000 ? 'fading' : ''}`}

@@ -169,7 +169,7 @@ export function App() {
   }, [potion, glow]);
 
   return (
-    <>
+    <div class="stage">
       <div class="backdrop" />
       <div id="app">
         <TopBar />
@@ -186,6 +186,6 @@ export function App() {
       <div ref={floatRef} class="float-layer" />
       <Sheets />
       <Overlays />
-    </>
+    </div>
   );
 }
