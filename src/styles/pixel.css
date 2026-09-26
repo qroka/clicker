@@ -957,3 +957,9 @@ i:not(.pbub):not(.on) {
 .tab.active::after {
   bottom: 2px;
 }
+.talent-col h3 {
+  font-family: var(--font-ui);
+  font-size: 17px;
+  color: var(--muted);
+  text-shadow: none;
+}
