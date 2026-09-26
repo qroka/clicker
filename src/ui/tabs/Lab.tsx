@@ -32,9 +32,15 @@ export function LabTab() {
   const s = st.s;
   const [slots, setSlots] = useState<IngredientId[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
+  const [distillMode, setDistillMode] = useState(false);
 
   const used = (id: IngredientId) => slots.filter((x) => x === id).length;
   const add = (id: IngredientId) => {
+    if (distillMode) {
+      const got = st.do((s) => E.distill(s, id, 10));
+      setMsg(got ? `⚗️ Перегнано в эссенцию: +${fmt(got)} 💧` : 'Нечего перегонять.');
+      return;
+    }
     if (slots.length >= 3 || (s.ingredients[id] ?? 0) - used(id) <= 0) return;
     setSlots([...slots, id]);
     setMsg(null);
@@ -105,6 +111,9 @@ export function LabTab() {
             );
           })}
         </div>
+        <button class={`btn ${distillMode ? 'violet' : 'ghost'} block`} style={{ marginTop: 10 }} onClick={() => { setDistillMode(!distillMode); setSlots([]); setMsg(null); }}>
+          {distillMode ? '⚗️ Перегонка: нажимай ингредиенты (по 10 шт.) · выйти' : '⚗️ Перегнать лишнее в эссенцию'}
+        </button>
         <div class="small muted" style={{ marginTop: 10 }}>
           Выбери 3 ингредиента и попробуй. Неудачный опыт сжигает ингредиенты, зато кот подскажет, насколько ты был близок.
         </div>

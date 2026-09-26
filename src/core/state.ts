@@ -24,6 +24,8 @@ export interface Expedition {
   end: number;
   /** Успех рассчитывается при отправке, чтобы исход не зависел от момента сбора. */
   success: boolean;
+  /** Зелье ускорения уже применено к этой экспедиции. */
+  hasted?: boolean;
 }
 
 export interface Quest {
@@ -75,6 +77,7 @@ export interface GameState {
 
   challenge: string | null;
   challengeDone: Record<string, number>;
+  goldRushReadyAt?: number;
 
   daily: {
     day: string; // YYYY-MM-DD последнего входа

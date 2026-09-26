@@ -219,3 +219,64 @@ describe('ежедневное', () => {
     expect(E.claimQuest(s, 0, Math.random)).toBe(false);
   });
 });
+
+describe('защита от эксплойтов', () => {
+  it('зелье ускорения действует на экспедицию только один раз', () => {
+    const s = newGame(T0);
+    s.chapter = 4;
+    const h = HEROES.find((x) => x.chapter === 2 && x.recruit === 'gold')!;
+    s.heroes[h.id] = { recruited: true, level: 1, shards: 0 };
+    s.ingredients.kraken_ink = 10;
+    s.ingredients.void_pearl = 5;
+    const m = E.computeMods(s, T0);
+    E.startExpedition(s, m, 'whispering_woods', 'long', [h.id], T0, () => 0);
+    const end0 = s.expeditions[0].end;
+    E.brew(s, m, ['kraken_ink', 'kraken_ink', 'void_pearl'], T0);
+    const end1 = s.expeditions[0].end;
+    expect(end1).toBeLessThan(end0);
+    E.brew(s, m, ['kraken_ink', 'kraken_ink', 'void_pearl'], T0);
+    expect(s.expeditions[0].end).toBe(end1);
+  });
+
+  it('зелья мгновенного дохода имеют перезарядку', () => {
+    const s = newGame(T0);
+    s.chapter = 5;
+    s.generators.apprentice = 10;
+    s.ingredients.kraken_ink = 5;
+    s.ingredients.moonpetal = 5;
+    s.ingredients.glowcap = 5;
+    const m = E.computeMods(s, T0);
+    E.brew(s, m, ['kraken_ink', 'moonpetal', 'glowcap'], T0);
+    const g1 = s.gold;
+    expect(g1).toBeGreaterThan(0);
+    E.brew(s, m, ['kraken_ink', 'moonpetal', 'glowcap'], T0 + 1000);
+    expect(s.gold).toBe(g1);
+    E.brew(s, m, ['kraken_ink', 'moonpetal', 'glowcap'], T0 + (E.BAL.goldRushCooldownSec + 1) * 1000);
+    expect(s.gold).toBeGreaterThan(g1);
+  });
+
+  it('перевод часов назад не даёт новый день', () => {
+    const s = newGame(T0);
+    const m = E.computeMods(s, T0);
+    E.rollDaily(s, m, T0 + 86400e3, Math.random);
+    expect(E.rollDaily(s, m, T0, Math.random)).toBe(false);
+    expect(s.daily.streak).toBe(1);
+  });
+
+  it('перегонка превращает ингредиенты в эссенцию', () => {
+    const s = newGame(T0);
+    s.ingredients.void_pearl = 3;
+    expect(E.distill(s, 'void_pearl', 10)).toBe(3 * E.BAL.distillEssence.legendary);
+    expect(s.ingredients.void_pearl).toBe(0);
+  });
+
+  it('бонус камней не пропадает при покупке талантов', () => {
+    const s = newGame(T0);
+    s.stones = 50;
+    s.stonesEarned = 50;
+    const before = E.computeMods(s, T0).prod;
+    E.buyTalent(s, 't_tap1');
+    expect(E.computeMods(s, T0).prod).toBeCloseTo(before);
+  });
+});
+

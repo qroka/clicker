@@ -48,12 +48,15 @@ const fmt = (n: number) => (n < 1e4 ? n.toFixed(0) : n.toExponential(2));
 
 function spend(now: number) {
   const m = E.computeMods(s, now);
+  // Копит казну на Великое Делание, когда всё остальное для него готово
+  if (E.canBrewKnown(s, FINAL_RECIPE)) mark('final-ings', now);
+  const saving = s.chapter >= 8 && !s.finalDone && E.canBrewKnown(s, FINAL_RECIPE) && E.gps(s, m, now) * 3 * 3600 > E.BAL.finalCost;
   // Улучшения — самые дешёвые, если стоят < 3 мин дохода или просто доступны
   for (const u of E.availableUpgrades(s)) {
     if (u.cost <= s.gold) E.buyUpgrade(s, u.id);
   }
   // Постройки: лучшая окупаемость (с учётом ближайшей вехи)
-  for (let guard = 0; guard < 200; guard++) {
+  for (let guard = 0; guard < 200 && !saving; guard++) {
     const mm = E.computeMods(s, now);
     let best: { id: (typeof GENERATORS)[number]['id']; score: number } | null = null;
     for (const g of GENERATORS) {
@@ -128,6 +131,10 @@ function brewStuff(now: number) {
   }
 }
 
+function distillExcess() {
+  for (const [id, n] of Object.entries(s.ingredients)) if (n > 40) E.distill(s, id as IngredientId, n - 40);
+}
+
 function daily(now: number) {
   const m = E.computeMods(s, now);
   E.rollDaily(s, m, now, rng);
@@ -173,6 +180,7 @@ for (let day = 0; day < DAYS; day++) {
       if (step % 60 === 0) {
         manageExpeditions(now, false);
         brewStuff(now);
+        distillExcess();
         daily(now);
         maybeTransmute(now);
       }
