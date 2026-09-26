@@ -28,36 +28,36 @@ const wisp = await page.$('.wisp');
 if (wisp) { const b = await wisp.boundingBox(); await page.mouse.click(b.x + b.width / 2, b.y + b.height / 2); await page.waitForTimeout(300); await shot('wisp'); } else console.log('no wisp');
 // Экспедиция
 await page.click('.tab:nth-child(3)');
-await page.click('.seg button:nth-child(2)');
-await page.click('.exp-slot.empty');
+await page.click('.tabs2 button:nth-child(2)');
+await page.click('text=Отправить экспедицию');
 await page.waitForTimeout(400);
 await shot('planner');
-await page.click('.sheet .btn.teal');
+await page.click('.sheet .cta');
 await page.waitForTimeout(300);
-console.log('expeditions:', await page.$$eval('.exp-slot:not(.empty)', (x) => x.length));
+console.log('expeditions:', await page.$$eval('.lrow .bar', (x) => x.length));
 // Варка: неудача и известный рецепт
 await page.click('.tab:nth-child(4)');
 await page.waitForTimeout(200);
 const ings = await page.$$('.ing:not(.empty)');
 for (let i = 0; i < 3; i++) await ings[Math.min(i, ings.length - 1)].click();
-await page.click('.btn.teal.block');
+await page.click('.brew .cta');
 await page.waitForTimeout(300);
-console.log('brew msg:', await page.$eval('.card .small[style*="center"]', (e) => e.textContent).catch(() => '—'));
+console.log('brew msg:', await page.$eval('.msg', (e) => e.textContent).catch(() => '—'));
 await shot('brew');
-await page.click('text=Перегнать лишнее в эссенцию');
+await page.click('text=Перегнать в эссенцию');
 await page.click('.ing:not(.empty) >> nth=0');
-console.log('distill msg:', await page.$eval('.card .small[style*="center"]', (e) => e.textContent).catch(() => '—'));
+console.log('distill msg:', await page.$eval('.msg', (e) => e.textContent).catch(() => '—'));
 // Трансмутация
 await page.click('.tab:nth-child(5)');
-await page.click('.stone-hero .btn');
-await page.click('.stone-hero .btn.violet');
+await page.click('.transmute .cta');
+await page.click('.transmute .cta');
 await page.waitForTimeout(500);
 await shot('transmute');
-for (let i = 0; i < 10; i++) { if (!(await page.$('.modal, .dialogue'))) break; await page.click('.modal .btn, .dialogue .dnext button'); await page.waitForTimeout(200); }
+for (let i = 0; i < 10; i++) { if (!(await page.$('.modal, .dialogue'))) break; await page.click('.modal .cta, .dialogue .dnext button'); await page.waitForTimeout(200); }
 console.log('gold after:', await page.$eval('.gold-amount', (e) => e.textContent));
 // Меню и достижения
 await page.click('.topbar .icon-btn:last-child');
-await page.click('.sheet .btn.ghost.grow >> nth=0');
+await page.click('.sheet .lrow >> nth=0');
 await page.waitForTimeout(300);
 await shot('ach');
 console.log('errors:', errors.length ? errors : 'none');

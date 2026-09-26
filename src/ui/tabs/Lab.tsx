@@ -8,6 +8,7 @@ import { bonusText } from '../labels';
 import { fmt, fmtTime } from '../format';
 import { burst } from '../fx';
 import { Ic, Px } from '../Px';
+import { Cta, Row, ScreenTitle, Section } from '../kit';
 
 export function brewText(b: RecipeDef['brew']): string {
   switch (b.kind) {
@@ -39,7 +40,7 @@ export function LabTab() {
   const add = (id: IngredientId) => {
     if (distillMode) {
       const got = st.do((s) => E.distill(s, id, 10));
-      setMsg(got ? `Перегнано в эссенцию: +${fmt(got)}` : 'Нечего перегонять.');
+      setMsg(got ? `+${fmt(got)} эссенции` : 'Нечего перегонять');
       return;
     }
     if (slots.length >= 3 || (s.ingredients[id] ?? 0) - used(id) <= 0) return;
@@ -48,24 +49,19 @@ export function LabTab() {
   };
   const remove = (i: number) => setSlots(slots.filter((_, j) => j !== i));
 
-  const doBrew = (ings: IngredientId[], el?: HTMLElement) => {
+  const doBrew = (ings: IngredientId[], x?: number, y?: number) => {
     const r = st.brew(ings);
     if (r.kind === 'failed') {
-      setMsg(
-        r.closest === 0
-          ? 'Пшик. Ни один ингредиент не подходит к неизвестным рецептам.'
-          : `Не вышло… но ${r.closest} из 3 ингредиентов подходят к одному неизвестному рецепту! (+3 эссенции)`,
-      );
+      setMsg(r.closest === 0 ? 'Пшик. Ни один ингредиент не подошёл' : `Мимо, но ${r.closest} из 3 подходят к неизвестному рецепту`);
     } else if (r.kind === 'locked') {
-      setMsg(s.chapter < 8 ? 'Котёл не выдержит такой силы. Вернись в главе 8.' : `Для Великого Делания нужно ${fmt(E.BAL.finalCost)} золота в казне.`);
+      setMsg(s.chapter < 8 ? 'Котёл не выдержит. Вернись в главе 8' : `Нужно ${fmt(E.BAL.finalCost)} золота в казне`);
       return;
     } else if (r.kind === 'missing') {
-      setMsg('Не хватает ингредиентов.');
+      setMsg('Не хватает ингредиентов');
       return;
     } else {
-      setMsg(r.kind === 'brewed' ? `${TEXTS.recipes[r.recipe].name} готово! ${brewText(RECIPES.find((x) => x.id === r.recipe)!.brew)}` : null);
-      const rect = el?.getBoundingClientRect();
-      if (rect) burst(rect.left + rect.width / 2, rect.top + rect.height / 2, { n: 30, kind: 'bubble', colors: [RECIPES.find((x) => x.id === r.recipe)!.color, '#fff'], speed: 6 });
+      setMsg(r.kind === 'brewed' ? `${TEXTS.recipes[r.recipe].name}: ${brewText(RECIPES.find((q) => q.id === r.recipe)!.brew)}` : null);
+      if (x !== undefined && y !== undefined) burst(x, y, { n: 20, kind: 'bubble', colors: [RECIPES.find((q) => q.id === r.recipe)!.color, '#fff'], speed: 6 });
     }
     setSlots([]);
   };
@@ -75,116 +71,115 @@ export function LabTab() {
 
   return (
     <div>
-      <div class="section-title">
-        <h2>Котёл экспериментов</h2>
-        <small>Рецептов: {known.length}/{RECIPES.length}</small>
-      </div>
-      <div class="card">
-        <div class="brew-slots">
+      <ScreenTitle aside={<span class="num t2" style={{ fontSize: 17 }}>{known.length}/{RECIPES.length}</span>}>Рецепты</ScreenTitle>
+
+      <div class="brew">
+        <div class="slots">
           {[0, 1, 2].map((i) => {
             const id = slots[i];
             return (
-              <button key={i} class={`brew-slot ${id ? 'filled' : ''}`} onClick={() => id && remove(i)} style={id ? { borderColor: ING_BY_ID[id].color } : {}}>
-                {id ? <Px id={id} scale={3} /> : ''}
+              <button key={i} class={`slot ${id ? '' : 'empty'}`} onClick={() => id && remove(i)} aria-label={id ? 'Убрать ингредиент' : 'Пустой слот'}>
+                {id ? <Px id={id} scale={3} /> : null}
               </button>
             );
           })}
         </div>
-        <button
-          class={`btn teal block big ${slots.length === 3 ? '' : 'disabled'}`}
-          onClick={(e) => slots.length === 3 && doBrew(slots, e.currentTarget as HTMLElement)}
-        >
-          <Px id="flask" scale={2} /> Сварить
-        </button>
-        {msg && (
-          <div class="small" style={{ marginTop: 10, textAlign: 'center', fontWeight: 700 }}>
-            {msg}
-          </div>
-        )}
-        <div class="ing-grid" style={{ marginTop: 14 }}>
+        <div class="ing-grid">
           {INGREDIENTS.map((ing) => {
             const n = (s.ingredients[ing.id] ?? 0) - used(ing.id);
             return (
-              <button key={ing.id} class={`ing ${n <= 0 ? 'empty' : ''}`} style={{ '--c': ing.color }} onClick={() => add(ing.id)} title={TEXTS.ingredients[ing.id].name}>
+              <button key={ing.id} class={`ing ${n <= 0 ? 'empty' : ''}`} onClick={() => add(ing.id)} aria-label={TEXTS.ingredients[ing.id].name}>
                 <Px id={ing.id} scale={2} />
-                <span class="cnt num">{n}</span>
+                <span class="cnt">{n}</span>
               </button>
             );
           })}
         </div>
-        <button class={`btn ${distillMode ? 'violet' : 'ghost'} block`} style={{ marginTop: 10 }} onClick={() => { setDistillMode(!distillMode); setSlots([]); setMsg(null); }}>
-          {distillMode ? 'Перегонка: нажимай ингредиенты (по 10 шт.) · выйти' : 'Перегнать лишнее в эссенцию'}
-        </button>
-        <div class="small muted" style={{ marginTop: 10 }}>
-          Выбери 3 ингредиента и попробуй. Неудачный опыт сжигает ингредиенты, зато кот подскажет, насколько ты был близок.
-        </div>
+        {msg && <p class="msg">{msg}</p>}
+        {distillMode ? (
+          <button class="btn2 block" onClick={() => setDistillMode(false)}>
+            Готово
+          </button>
+        ) : (
+          <Cta off={slots.length !== 3} onClick={(e) => doBrew(slots, e.clientX, e.clientY)}>
+            {slots.length === 3 ? 'Сварить зелье' : `Выбери ещё ${3 - slots.length}`}
+          </Cta>
+        )}
+        {!distillMode && (
+          <button
+            class="btn2 block"
+            style={{ marginTop: 10 }}
+            onClick={() => {
+              setDistillMode(true);
+              setSlots([]);
+              setMsg('Нажимай ингредиент — 10 штук станут эссенцией');
+            }}
+          >
+            <Ic id="essence" /> Перегнать в эссенцию
+          </button>
+        )}
       </div>
 
       {known.length > 0 && (
-        <>
-          <div class="section-title">
-            <h2>Книга рецептов</h2>
-          </div>
+        <Section title="Книга рецептов">
           <div class="stack">
             {known.map((r) => {
               const can = E.canBrewKnown(s, r.id);
               return (
-                <div key={r.id} class="recipe">
-                  <div class="flask" style={{ '--c': r.color }}>
-                    <Px id="flask" scale={2} tint={r.color} />
-                  </div>
-                  <div class="grow">
-                    <b>{TEXTS.recipes[r.id].name}</b>
-                    <div class="small" style={{ color: 'var(--teal)', fontWeight: 700 }}>
-                      Открытие: {bonusText(r.discovery.type, r.discovery.value, r.discovery.target)}
-                    </div>
-                    <div class="small muted">
+                <Row
+                  key={r.id}
+                  icon={<Px id="flask" scale={2} tint={r.color} />}
+                  name={TEXTS.recipes[r.id].name}
+                  sub={
+                    <>
+                      <span class="plus">{bonusText(r.discovery.type, r.discovery.value, r.discovery.target)}</span>
+                      <br />
                       {r.ingredients.map((i, k) => (
                         <Px key={k} id={i} scale={1} class="ic" />
                       ))}{' '}
-                      → {brewText(r.brew)}
-                    </div>
-                  </div>
-                  <button class={`btn ${can ? '' : 'disabled'}`} onClick={(e) => can && doBrew([...r.ingredients], e.currentTarget as HTMLElement)}>
-                    Сварить
-                  </button>
-                </div>
+                      {brewText(r.brew)}
+                    </>
+                  }
+                  right={
+                    <button class={`btn2 ${can ? '' : 'off'}`} onClick={(e) => can && doBrew([...r.ingredients], e.clientX, e.clientY)}>
+                      Сварить
+                    </button>
+                  }
+                />
               );
             })}
           </div>
-        </>
+        </Section>
       )}
 
       {unknown.length > 0 && (
-        <>
-          <div class="section-title">
-            <h2>Неизвестные рецепты</h2>
-            <small>подсказки из записей Альбериха</small>
-          </div>
+        <Section
+          title="Неизвестные"
+          aside={`${unknown.length}`}
+          help={() => st.toast({ icon: 'book', title: 'Как открыть рецепт', text: 'Смешай 3 ингредиента. Подсказка — в описании', kind: 'info' })}
+        >
           <div class="stack">
             {unknown.map((r) => {
               const stars = Math.max(...r.ingredients.map((i) => RARITY_STARS[ING_BY_ID[i].rarity]));
               const isFinal = r.id === FINAL_RECIPE;
               return (
-                <div key={r.id} class="recipe" style={isFinal ? { borderColor: 'rgba(255,51,85,0.5)', background: 'linear-gradient(90deg, rgba(255,51,85,0.12), var(--card))' } : {}}>
-                  <div class="flask unknown">?</div>
-                  <div class="grow">
-                    <b>{isFinal ? TEXTS.recipes[r.id].name : '???'}</b>
-                    <div class="small muted">{TEXTS.recipes[r.id].desc}</div>
-                    <div class="small" style={{ color: 'var(--gold)' }}>
+                <Row
+                  key={r.id}
+                  icon={isFinal ? <Px id="stone" scale={2} /> : <span class="px-font t3" style={{ fontSize: 22 }}>?</span>}
+                  name={isFinal ? TEXTS.recipes[r.id].name : '???'}
+                  count={
+                    <span>
                       {Array.from({ length: 4 }).map((_, k) => (
                         <Ic key={k} id={k < stars ? 'star' : 'star_empty'} />
                       ))}
-                      {isFinal && <span class="muted">
-                          {' '}· глава 8 + <Ic id="coin" /> {fmt(E.BAL.finalCost)}
-                        </span>}
-                    </div>
-                  </div>
-                </div>
+                    </span>
+                  }
+                  sub={isFinal ? `Глава 8 и ${fmt(E.BAL.finalCost)} золота` : TEXTS.recipes[r.id].desc}
+                />
               );
             })}
           </div>
-        </>
+        </Section>
       )}
     </div>
   );
