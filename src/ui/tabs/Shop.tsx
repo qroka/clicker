@@ -32,6 +32,10 @@ function contextTip(st: ReturnType<typeof useStore>): string | null {
   if (E.canTransmute(s) && E.pendingStones(s) >= Math.max(5, s.stonesEarned)) return `Трансмутация даст ${fmt(E.pendingStones(s))} 💎. Пора переплавить лавку!`;
   if (E.availableUpgrades(s).some((u) => u.cost <= s.gold)) return 'В Мастерской есть улучшение тебе по карману. Удвоение — это красиво.';
   void m;
+  const nav = navigator as Navigator & { standalone?: boolean };
+  const ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  if (ios && !nav.standalone && s.stats.playSeconds > 120 && Math.random() < 0.35)
+    return 'Совет от кота: «Поделиться» → «На экран Домой». Лавка откроется как приложение, на весь экран.';
   return null;
 }
 

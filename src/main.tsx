@@ -13,3 +13,6 @@ if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`).catch(() => {});
   });
 }
+
+// Просим браузер не вычищать сохранение (iOS может чистить данные сайтов, которые давно не открывали).
+void navigator.storage?.persist?.().catch(() => {});
