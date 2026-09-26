@@ -1,8 +1,7 @@
 import { render } from 'preact';
 import { App } from './ui/App';
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/600.css';
-import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/tiny5/index.css';
+import '@fontsource/press-start-2p/index.css';
 import './styles/main.css';
 import './styles/pixel.css';
 

@@ -15,7 +15,7 @@ export function Cauldron({ heat, boiling, potion, onTap }: Props) {
   const [squish, setSquish] = useState(false);
   const [frame, setFrame] = useState(0);
   const timer = useRef<number>();
-  const scale = Math.max(4, Math.min(6, Math.floor((Math.min(window.innerWidth, 560) * 0.72) / 48)));
+  const scale = Math.max(3, Math.min(6, Math.floor((Math.min(window.innerWidth, 560) * 0.62) / 48)));
 
   useEffect(() => {
     const iv = setInterval(() => setFrame((f) => 1 - f), boiling ? 110 : 220);

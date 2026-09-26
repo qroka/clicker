@@ -170,9 +170,9 @@ function HeroView({ id }: { id: string }) {
         </span>
         {rec && <span class="chip" style={{ fontSize: 11 }}>Ур. {lv}</span>}
       </div>
-      <div class="small dim" style={{ fontStyle: 'italic' }}>Гость из мира: {h.realm}</div>
+      <div class="small dim" >Гость из мира: {h.realm}</div>
       <p class="small" style={{ textAlign: 'left' }}>{h.bio}</p>
-      <div class="card" style={{ fontStyle: 'italic', margin: '8px 0' }}>«{h.quote}»</div>
+      <div class="card" style={{ margin: '8px 0' }}>«{h.quote}»</div>
       <div class="card" style={{ margin: '10px 0', textAlign: 'left' }}>
         <div class="small muted">Бонус</div>
         <b style={{ color: 'var(--teal)' }}>{bonusText(h.bonus.type, E.heroBonusValue(h, Math.max(1, lv)), h.bonus.target)}</b>

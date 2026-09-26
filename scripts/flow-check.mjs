@@ -44,7 +44,7 @@ await page.click('.btn.teal.block');
 await page.waitForTimeout(300);
 console.log('brew msg:', await page.$eval('.card .small[style*="center"]', (e) => e.textContent).catch(() => '—'));
 await shot('brew');
-await page.click('text=⚗️ Перегнать лишнее в эссенцию');
+await page.click('text=Перегнать лишнее в эссенцию');
 await page.click('.ing:not(.empty) >> nth=0');
 console.log('distill msg:', await page.$eval('.card .small[style*="center"]', (e) => e.textContent).catch(() => '—'));
 // Трансмутация
