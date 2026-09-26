@@ -59,20 +59,20 @@ function TopBar() {
           <GoldCounter />
         </div>
         <div class="gps">
-          <b class="num">{fmt(g, 1)}</b> в сек{boost > 1 && <span class="boost"> ×{fmt(boost)}</span>}
+          <span class="num">{fmt(g, 1)}</span> в сек{boost > 1 && <span class="boost"> ×{fmt(boost)}</span>}
         </div>
       </div>
-      <div class="chips">
+      <div class="wallet">
         {s.chapter >= FEATURE_CHAPTER.guild && (
-          <span class="chip" title="Эссенция">
+          <span class="pill essence" aria-label="Эссенция">
             <Ic id="essence" />
-            <span class="num">{fmt(s.essence)}</span>
+            {fmt(s.essence)}
           </span>
         )}
         {s.stonesEarned > 0 && (
-          <span class="chip" title="Философские камни">
+          <span class="pill" aria-label="Философские камни">
             <Ic id="stone" />
-            <span class="num">{fmt(s.stones)}</span>
+            {fmt(s.stones)}
           </span>
         )}
       </div>

@@ -9,15 +9,16 @@ import { CHAPTER_THRESHOLDS, CHALLENGE_BY_ID, challengeGoal } from '../../data/p
 import type { BuffKind } from '../../core/state';
 import { Ic, Px } from '../Px';
 import { chapterPalette } from '../theme';
+import { Bar } from '../kit';
 
-const BUFF_VIEW: Record<BuffKind, { icon: string; label: (m: number) => string; cls: string }> = {
-  boil: { icon: 'boil', label: (m) => `Кипение ×${m} тап`, cls: 'hot' },
-  frenzy: { icon: 'spark', label: (m) => `Искра ×${m} доход`, cls: 'gold' },
-  tapStorm: { icon: 'bolt', label: (m) => `Шторм ×${m} тап`, cls: 'gold' },
-  prodBoost: { icon: 'flask', label: (m) => `Зелье ×${m} доход`, cls: '' },
-  tapBoost: { icon: 'fist', label: (m) => `Зелье ×${m} тап`, cls: '' },
-  critBoost: { icon: 'target', label: (m) => `Криты ×${m}`, cls: '' },
-  wispRain: { icon: 'starfall', label: () => 'Дождь искр', cls: '' },
+const BUFF_VIEW: Record<BuffKind, { icon: string; label: string }> = {
+  boil: { icon: 'boil', label: 'тап' },
+  frenzy: { icon: 'spark', label: 'доход' },
+  tapStorm: { icon: 'bolt', label: 'тап' },
+  prodBoost: { icon: 'flask', label: 'доход' },
+  tapBoost: { icon: 'fist', label: 'тап' },
+  critBoost: { icon: 'target', label: 'криты' },
+  wispRain: { icon: 'starfall', label: 'искры' },
 };
 
 function contextTip(st: ReturnType<typeof useStore>): string | null {
@@ -163,45 +164,43 @@ export function ShopTab() {
   return (
     <div class="shop">
       <button
-        class="shop-head"
+        class="chapter"
         onClick={() => chText && st.toast({ icon: 'book', title: `Глава ${s.chapter}. ${chText.title}`, text: next ? chText.goal : 'Свари Философский камень', kind: 'info' })}
       >
-        <div class="grow" style={{ textAlign: 'left' }}>
-          <div class="row" style={{ gap: 8 }}>
-            <span class="cn">Глава {s.chapter}</span>
-            <span class="ct grow">{chText?.title}</span>
-            {next && <span class="cn num">{pct(chProgress)}</span>}
-          </div>
-          {next && (
-            <div class="bar">
-              <i style={{ width: pct(chProgress) }} />
-            </div>
-          )}
+        <div class="top">
+          <span class="label">Глава {s.chapter}</span>
+          <span class="ttl">{chText?.title}</span>
+          {next && <span class="pc">{pct(chProgress)}</span>}
         </div>
+        {next && <Bar value={chProgress} />}
       </button>
 
-      <div class="buffs">
-        {challenge && (
-          <span class="buff hot">
-            <Ic id={challenge.icon} /> {fmt(s.runEarned)} / {fmt(challengeGoal(challenge, s.challengeDone[challenge.id] ?? 0))}
-          </span>
-        )}
-        {buffs.map((k) => {
-          const v = BUFF_VIEW[k];
-          const b = s.buffs[k]!;
-          return (
-            <span key={k} class={`buff ${v.cls}`}>
-              <Ic id={v.icon} /> {v.label(b.mult)} · {fmtTime((b.until - now) / 1000)}
+      {(challenge || buffs.length > 0) && (
+        <div class="buffs">
+          {challenge && (
+            <span class="buff">
+              <Ic id={challenge.icon} />
+              <span class="num">{fmt(s.runEarned)}</span>
+              <span class="tm">/ {fmt(challengeGoal(challenge, s.challengeDone[challenge.id] ?? 0))}</span>
             </span>
-          );
-        })}
-      </div>
+          )}
+          {buffs.map((k) => {
+            const v = BUFF_VIEW[k];
+            const b = s.buffs[k]!;
+            return (
+              <span key={k} class="buff">
+                <Ic id={v.icon} />
+                <span class="num">×{b.mult}</span> {v.label}
+                <span class="tm">{fmtTime((b.until - now) / 1000)}</span>
+              </span>
+            );
+          })}
+        </div>
+      )}
 
       <div class="cauldron-zone" ref={zone}>
         <Cauldron heat={s.heat} boiling={boiling} potion={potionColor} onTap={onTap} />
-        {s.stats.taps < 15 && !tip && <div class="tap-hint">
-            <Ic id="hand_tap" /> Стучи по котлу!
-          </div>}
+        {s.stats.taps < 15 && !tip && <div class="tap-hint">Стучи по котлу</div>}
         {s.wisp && (
           <button
             class={`wisp ${s.wisp.expires - now < 3000 ? 'fading' : ''}`}

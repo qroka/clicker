@@ -10,6 +10,7 @@ import { brewText } from './tabs/Lab';
 import { haptic, sfx } from './fx';
 import type { DialogueLine, IngredientId } from '../core/types';
 import { Ic, Px } from './Px';
+import { Cta } from './kit';
 
 function Dialogue({ title, lines, onClose }: { title?: string; lines: DialogueLine[]; onClose: () => void }) {
   const [i, setI] = useState(0);
@@ -40,14 +41,17 @@ function Dialogue({ title, lines, onClose }: { title?: string; lines: DialogueLi
         {title && <div class="dtitle">{title}</div>}
         <div class="dbox">
           <div class="dspeaker">
-            <span>
+            <span class="plate">
               <Px id={sp.icon} scale={2} />
             </span>
-            {sp.name}
+            <span class="label" style={{ color: 'var(--gold)' }}>
+              {sp.name}
+            </span>
           </div>
           <div class="dtext">{line.text.slice(0, shown)}</div>
           <div class="dnext">
             <button
+              class="btn2"
               onClick={(e) => {
                 e.stopPropagation();
                 onClose();
@@ -55,8 +59,8 @@ function Dialogue({ title, lines, onClose }: { title?: string; lines: DialogueLi
             >
               Пропустить
             </button>
-            <span>
-              {i + 1}/{lines.length} · нажми ▸
+            <span class="num t3">
+              {i + 1}/{lines.length}
             </span>
           </div>
         </div>
@@ -67,10 +71,10 @@ function Dialogue({ title, lines, onClose }: { title?: string; lines: DialogueLi
 
 function IngList({ ings }: { ings: Partial<Record<IngredientId, number>> }) {
   return (
-    <div class="row" style={{ justifyContent: 'center', flexWrap: 'wrap', gap: 8, margin: '8px 0' }}>
+    <div class="row" style={{ flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
       {Object.entries(ings).map(([id, n]) => (
-        <span key={id} class="chip">
-          <Px id={ING_BY_ID[id as IngredientId].id} scale={2} /> ×{n}
+        <span key={id} class="pill">
+          <Px id={ING_BY_ID[id as IngredientId].id} scale={1} /> ×{n}
         </span>
       ))}
     </div>
@@ -79,24 +83,26 @@ function IngList({ ings }: { ings: Partial<Record<IngredientId, number>> }) {
 
 function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; onClose: () => void }) {
   let body;
+  let cta = 'Отлично';
   switch (m.type) {
     case 'offline':
+      cta = 'Забрать золото';
       body = (
         <>
-          <div class="big-emoji">
+          <div class="hero-art">
             <Px id="moon" scale={4} />
           </div>
-          <h2>С возвращением!</h2>
-          <p class="muted">
-            Пока тебя не было {fmtTime(m.report.seconds)}, ученики и кот работали.
-            {m.report.cappedSeconds < m.report.seconds && ` (Лимит оффлайна: ${fmtTime(m.report.cappedSeconds)})`}
+          <h2>С возвращением</h2>
+          <p>
+            Тебя не было {fmtTime(m.report.seconds)}
+            {m.report.cappedSeconds < m.report.seconds ? `, засчитано ${fmtTime(m.report.cappedSeconds)}` : ''}
           </p>
-          <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--gold)', margin: '10px 0' }} class="num">
-            +{fmt(m.report.gold)} <Px id="coin" scale={2} />
+          <div class="reward">
+            <Px id="coin" scale={2} />+{fmt(m.report.gold)}
           </div>
           {m.report.expeditionsReady > 0 && (
-            <p class="small" style={{ color: 'var(--teal)' }}>
-              <Ic id="compass" /> Вернулись экспедиции: {m.report.expeditionsReady}
+            <p class="hint">
+              <Ic id="compass" /> Вернулись экспедиции: <span class="num t2">{m.report.expeditionsReady}</span>
             </p>
           )}
         </>
@@ -105,21 +111,22 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
     case 'loot': {
       const story = (m.loot.success ? TEXTS.expeditionStories.success : TEXTS.expeditionStories.fail)[Math.floor(Math.random() * 8)] ?? '';
       const hero = E.HERO_BY_ID[m.heroes[0]]?.name ?? 'Отряд';
+      cta = 'Забрать добычу';
       body = (
         <>
-          <div class="big-emoji">
+          <div class="hero-art">
             <Px id={m.loot.success ? 'bag' : 'broken'} scale={4} />
           </div>
-          <h2>{m.loot.success ? 'Удачная вылазка!' : 'Неудача…'}</h2>
-          <p class="muted small">{story.replaceAll('{hero}', hero).replaceAll('{place}', TEXTS.locations[m.location as keyof typeof TEXTS.locations]?.name ?? '')}</p>
+          <h2>{m.loot.success ? 'Удачная вылазка' : 'Неудача'}</h2>
+          <p>{story.replaceAll('{hero}', hero).replaceAll('{place}', TEXTS.locations[m.location as keyof typeof TEXTS.locations]?.name ?? '')}</p>
           <IngList ings={m.loot.ingredients} />
-          <div class="row" style={{ justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span class="chip">
-              <Ic id="essence" /> +{m.loot.essence}
+          <div class="row" style={{ flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
+            <span class="pill essence">
+              <Ic id="essence" />+{m.loot.essence}
             </span>
             {m.loot.shards.map((sh, i) => (
-              <span key={i} class="chip">
-                <Ic id="shard" /> <Px id={sh.hero} scale={1} class="ic" /> +{sh.n}
+              <span key={i} class="pill">
+                <Px id={sh.hero} scale={1} />+{sh.n}
               </span>
             ))}
           </div>
@@ -131,15 +138,17 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       const r = RECIPES.find((x) => x.id === m.recipe)!;
       body = (
         <>
-          <div class="rays" />
-          <div class="big-emoji">
+          <div class="hero-art">
             <Px id="flask" scale={4} tint={r.color} />
           </div>
-          <h2>Новый рецепт!</h2>
-          <h3 style={{ color: r.color, fontSize: 20, margin: '4px 0' }}>{TEXTS.recipes[r.id].name}</h3>
-          <p class="muted small">{TEXTS.recipes[r.id].desc}</p>
-          <p style={{ color: 'var(--teal)', fontWeight: 800 }}>Навсегда: {bonusText(r.discovery.type, r.discovery.value, r.discovery.target)}</p>
-          <p class="small">Эффект варки: {brewText(r.brew)}</p>
+          <div class="label">Новый рецепт</div>
+          <h2 style={{ marginTop: 4 }}>{TEXTS.recipes[r.id].name}</h2>
+          <p>
+            <span class="plus">{bonusText(r.discovery.type, r.discovery.value, r.discovery.target)}</span> навсегда
+          </p>
+          <p class="hint" style={{ marginTop: -8 }}>
+            Варка: {brewText(r.brew)}
+          </p>
         </>
       );
       break;
@@ -147,14 +156,13 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
     case 'transmuted':
       body = (
         <>
-          <div class="rays" />
-          <div class="big-emoji">
+          <div class="hero-art">
             <Px id="stone" scale={4} />
           </div>
-          <h2>Трансмутация!</h2>
-          <p class="muted">Лавка возрождается из пепла — сильнее прежнего.</p>
-          <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--gold)' }}>
-            +{fmt(m.stones)} <Px id="stone" scale={2} />
+          <h2>Трансмутация</h2>
+          <p>Лавка возрождается сильнее прежнего</p>
+          <div class="reward">
+            <Px id="stone" scale={2} />+{fmt(m.stones)}
           </div>
         </>
       );
@@ -163,15 +171,14 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       const c = CHALLENGE_BY_ID[m.id];
       body = (
         <>
-          <div class="rays" />
-          <div class="big-emoji">
+          <div class="hero-art">
             <Px id="trophy" scale={4} />
           </div>
-          <h2>Испытание пройдено!</h2>
+          <div class="label">Испытание пройдено</div>
+          <h2 style={{ marginTop: 4 }}>{c.name}</h2>
           <p>
-            <Ic id={c.icon} /> {c.name}
+            <span class="plus">{c.rewardText}</span> навсегда
           </p>
-          <p style={{ color: 'var(--teal)', fontWeight: 800 }}>Навсегда: {c.rewardText}</p>
         </>
       );
       break;
@@ -180,11 +187,11 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
   return (
     <>
       <div class="scrim" onClick={onClose} />
-      <div class="modal">
+      <div class="modal" role="dialog">
         {body}
-        <button class="btn block big" style={{ marginTop: 14 }} onClick={onClose}>
-          Отлично!
-        </button>
+        <div style={{ marginTop: 8 }}>
+          <Cta onClick={onClose}>{cta}</Cta>
+        </div>
       </div>
     </>
   );
@@ -199,7 +206,7 @@ export function Overlays() {
       <div class="toasts">
         {st.toasts.map((t) => (
           <div key={t.id} class={`toast ${t.kind ? 'toast-' + t.kind : ''}`}>
-            <span class="te">
+            <span class="tplate">
               <Px id={t.icon} scale={2} />
             </span>
             <div>

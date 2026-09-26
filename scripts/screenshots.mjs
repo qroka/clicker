@@ -32,20 +32,20 @@ page.on('pageerror', (e) => errors.push(e.message));
 await page.goto(URL);
 await page.waitForTimeout(800);
 await shot('04-mid-shop');
-for (let i = 0; i < 5; i++) { if (!(await page.$('.modal, .dialogue'))) break; await page.click('.modal .btn, .dialogue .dnext button'); await page.waitForTimeout(200); }
+for (let i = 0; i < 5; i++) { if (!(await page.$('.modal, .dialogue'))) break; await page.click('.modal .cta, .dialogue .dnext button'); await page.waitForTimeout(200); }
 for (let i = 0; i < 30; i++) { await page.mouse.click(195, 430); await page.waitForTimeout(25); }
 await shot('05-mid-shop-tap');
 await page.click('.tab:nth-child(2)'); await page.waitForTimeout(300); await shot('06-mid-workshop');
 await page.click('.tab:nth-child(3)'); await page.waitForTimeout(300); await shot('07-guild');
-await page.click('.hero-card'); await page.waitForTimeout(400); await shot('08-hero');
-await page.click('.sheet-head .icon-btn'); await page.waitForTimeout(200);
-await page.click('.seg button:nth-child(2)'); await page.waitForTimeout(300); await shot('09-expeditions');
-const empty = await page.$('.exp-slot.empty'); if (empty) { await empty.click(); await page.waitForTimeout(400); await shot('10-exp-planner'); await page.click('.sheet-head .icon-btn'); }
+await page.click('.tile'); await page.waitForTimeout(400); await shot('08-hero');
+await page.click('.sheet-head .close'); await page.waitForTimeout(200);
+await page.click('.tabs2 button:nth-child(2)'); await page.waitForTimeout(300); await shot('09-expeditions');
+const empty = await page.$('text=Отправить экспедицию'); if (empty) { await empty.click(); await page.waitForTimeout(400); await shot('10-exp-planner'); await page.click('.sheet-head .close'); }
 await page.click('.tab:nth-child(4)'); await page.waitForTimeout(300); await shot('11-lab');
 await page.click('.tab:nth-child(5)'); await page.waitForTimeout(300); await shot('12-knowledge');
 await page.evaluate(() => document.querySelector('.main').scrollTo(0, 700)); await page.waitForTimeout(200); await shot('13-knowledge2');
 await page.click('.topbar .icon-btn'); await page.waitForTimeout(400); await shot('14-daily');
-await page.click('.sheet-head .icon-btn'); await page.waitForTimeout(200);
+await page.click('.sheet-head .close'); await page.waitForTimeout(200);
 await page.click('.topbar .icon-btn:last-child'); await page.waitForTimeout(400); await shot('15-menu');
 console.log('errors:', errors.length ? errors : 'none');
 await browser.close();

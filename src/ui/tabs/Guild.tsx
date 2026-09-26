@@ -6,12 +6,14 @@ import { LOC_BY_ID } from '../../data/world';
 import { TEXTS } from '../../data/texts';
 import { fmt, fmtTime } from '../format';
 import type { HeroDef } from '../../core/types';
-import { Ic, Px } from '../Px';
+import { Px } from '../Px';
+import { Glyph, Row, ScreenTitle, Section, StateBox } from '../kit';
 
 export function Portrait({ h, locked, busy, size }: { h: HeroDef; locked?: boolean; busy?: boolean; size?: 'lg' | 'sm' }) {
+  const color = { common: 'var(--r-common)', rare: 'var(--r-rare)', epic: 'var(--r-epic)', legendary: 'var(--r-legendary)' }[h.rarity];
   return (
-    <div class={`portrait ${size ?? ''} ${locked ? 'locked' : ''} ${busy ? 'busy' : ''}`} style={{ '--c': h.color }}>
-      <Px id={locked ? 'question' : h.id} scale={locked ? 2 : size === 'lg' ? 4 : size === 'sm' ? 1 : 2} />
+    <div class={`portrait ${size ?? ''} ${locked ? 'locked' : ''} ${busy ? 'busy' : ''}`} style={{ '--c': color }}>
+      {locked ? <Glyph name="lock" cell={size === 'lg' ? 5 : 3} color="var(--text-4)" /> : <Px id={h.id} scale={size === 'lg' ? 4 : size === 'sm' ? 1 : 2} />}
     </div>
   );
 }
@@ -29,16 +31,13 @@ function Heroes() {
   });
   return (
     <>
-      <div class="card row" style={{ marginBottom: 10 }}>
-        <Px id="castle" scale={2} />
-        <div class="grow">
-          <b>Слава гильдии: +{Math.round(recruited * E.BAL.heroBonusPerRecruit * 100)}% к доходу</b>
-          <div class="small muted">
-            Героев: {recruited}/{HEROES.length} · каждый даёт +3% и свой бонус
-          </div>
-        </div>
-      </div>
-      <div class="hero-grid">
+      <Row
+        icon={<Px id="castle" scale={2} />}
+        name="Слава гильдии"
+        count={<span class="plus">+{Math.round(recruited * E.BAL.heroBonusPerRecruit * 100)}%</span>}
+        sub={`${recruited} из ${HEROES.length} героев · каждый +3% к доходу`}
+      />
+      <div class="hero-grid" style={{ marginTop: 12 }}>
         {order.map((h) => {
           const hs = s.heroes[h.id];
           const unlocked = E.heroUnlocked(s, h);
@@ -46,26 +45,23 @@ function Heroes() {
           const canUp = rec && hs.level < E.BAL.maxHeroLevel && s.essence >= E.heroLevelCost(s, m, h);
           const canRec = E.canRecruit(s, h);
           return (
-            <button key={h.id} class="hero-card" onClick={() => st.openSheet({ hero: h.id })}>
-              {(canUp || canRec) && <span class="can-up">{canRec ? '!' : '+'}</span>}
+            <button key={h.id} class={`tile ${canRec ? 'claim' : ''} ${unlocked ? '' : 'locked'}`} onClick={() => st.openSheet({ hero: h.id })} aria-label={unlocked ? h.name : 'Неизвестный гость'}>
+              {canUp && <span class="dot" />}
               <Portrait h={h} locked={!unlocked} busy={busy.has(h.id)} />
-              <div class="hn">{unlocked ? h.name : '???'}</div>
+              <div class="tn">{unlocked ? h.name : `Глава ${h.chapter}`}</div>
               {rec ? (
-                <span class="hl">Ур. {hs.level}</span>
+                <span class="tl">Ур. {hs.level}</span>
               ) : unlocked ? (
                 h.recruit === 'gold' ? (
-                  <span class="hl" style={{ color: s.gold >= E.heroGoldCost(h) ? 'var(--green)' : 'var(--dim)' }}>
-                    <Ic id="coin" /> {fmt(E.heroGoldCost(h))}
+                  <span class="tl" style={{ color: canRec ? 'var(--gold)' : undefined }}>
+                    {fmt(E.heroGoldCost(h))}
                   </span>
                 ) : (
-                  <span class="hl" style={{ color: 'var(--violet)' }}>
-                    <Ic id="shard" /> {hs?.shards ?? 0}/{E.BAL.heroShardsNeeded[h.rarity]}
+                  <span class="tl">
+                    {hs?.shards ?? 0}/{E.BAL.heroShardsNeeded[h.rarity]}
                   </span>
                 )
-              ) : (
-                <span class="hl dim">Глава {h.chapter}</span>
-              )}
-              <span class={`rarity ${h.rarity}`}>{h.rarity === 'legendary' ? 'Легенда' : h.rarity === 'epic' ? 'Эпик' : h.rarity === 'rare' ? 'Редкий' : 'Обычный'}</span>
+              ) : null}
             </button>
           );
         })}
@@ -82,53 +78,32 @@ function Expeditions() {
   const anyHero = HEROES.some((h) => s.heroes[h.id]?.recruited);
   return (
     <div class="stack">
-      <div class="small muted" style={{ margin: '0 2px 4px' }}>
-        Слотов: {s.expeditions.length}/{slots}
-        {slots < 3 ? ` · ещё слот откроется в главе ${slots === 1 ? 4 : 6}` : ''}
-      </div>
       {s.expeditions.map((e) => {
-        const loc = LOC_BY_ID[e.location];
         const left = (e.end - now) / 1000;
         const ready = left <= 0;
-        const prog = Math.min(1, (now - e.start) / (e.end - e.start));
         return (
-          <div key={e.uid} class={`exp-slot ${ready ? 'ready' : ''}`}>
-            <div class="loc-icon">
-              <Px id={loc.id} scale={2} />
-            </div>
-            <div class="grow">
-              <b>{TEXTS.locations[e.location].name}</b>
-              <div class="mini-team">
-                {e.heroes.map((id) => (
-                  <Px key={id} id={id} scale={1} />
-                ))}
-              </div>
-              {!ready && (
-                <div class="bar teal" style={{ marginTop: 5 }}>
-                  <i style={{ width: `${prog * 100}%` }} />
-                </div>
-              )}
-            </div>
-            {ready ? (
-              <button class="btn teal" onClick={() => st.collectExpedition(e.uid)}>
-                Забрать
-              </button>
-            ) : (
-              <span class="small num" style={{ fontWeight: 800 }}>
-                <Ic id="hourglass" /> {fmtTime(left)}
-              </span>
-            )}
-          </div>
+          <Row
+            key={e.uid}
+            icon={<Px id={LOC_BY_ID[e.location].id} scale={2} />}
+            name={TEXTS.locations[e.location].name}
+            count={ready ? <span class="plus">вернулись</span> : fmtTime(left)}
+            progress={{ value: Math.min(1, (now - e.start) / (e.end - e.start)), full: ready }}
+            claim={ready}
+            right={<StateBox state={ready ? 'claim' : 'todo'} />}
+            onClick={ready ? () => st.collectExpedition(e.uid) : undefined}
+          />
         );
       })}
       {Array.from({ length: Math.max(0, slots - s.expeditions.length) }).map((_, i) => (
-        <button key={i} class="exp-slot empty" onClick={() => (anyHero ? st.openSheet({ expedition: true }) : st.toast({ icon: 'shield', title: 'Нужен герой', text: 'Сначала найми героя в гильдию', kind: 'info' }))}>
-          ＋ Отправить экспедицию
-        </button>
+        <Row
+          key={`free${i}`}
+          icon={<Glyph name="plus" cell={3} color="var(--text-2)" />}
+          name="Отправить экспедицию"
+          sub="Свободный слот"
+          onClick={() => (anyHero ? st.openSheet({ expedition: true }) : st.toast({ icon: 'shield', title: 'Нужен герой', text: 'Сначала найми героя', kind: 'info' }))}
+        />
       ))}
-      <div class="card small muted" style={{ marginTop: 6 }}>
-        <Ic id="compass" /> Экспедиции приносят ингредиенты для рецептов, эссенцию для героев и осколки контрактов легендарных гостей. Длинные вылазки выгоднее — отправляй их перед сном.
-      </div>
+      {slots < 3 && <p class="hint">Ещё слот откроется в главе {slots === 1 ? 4 : 6}</p>}
     </div>
   );
 }
@@ -139,18 +114,27 @@ export function GuildTab() {
   const ready = st.s.expeditions.filter((e) => e.end <= Date.now()).length;
   return (
     <div>
-      <div class="section-title">
-        <h2>Гильдия</h2>
-        <div class="seg" style={{ width: 210 }}>
-          <button class={sub === 'heroes' ? 'on' : ''} onClick={() => setSub('heroes')}>
-            Герои
-          </button>
-          <button class={sub === 'exp' ? 'on' : ''} onClick={() => setSub('exp')}>
-            Экспедиции{ready > 0 && <span class="cnt">{ready}</span>}
-          </button>
-        </div>
+      <ScreenTitle>Гильдия</ScreenTitle>
+      <div class="seg tabs2">
+        <button class={sub === 'heroes' ? 'on' : ''} onClick={() => setSub('heroes')} style={{ fontFamily: 'var(--ui)', fontWeight: 600 }}>
+          Герои
+        </button>
+        <button class={sub === 'exp' ? 'on' : ''} onClick={() => setSub('exp')} style={{ fontFamily: 'var(--ui)', fontWeight: 600 }}>
+          Экспедиции{ready ? ` · ${ready}` : ''}
+        </button>
       </div>
-      {sub === 'heroes' ? <Heroes /> : <Expeditions />}
+      {sub === 'heroes' ? (
+        <Heroes />
+      ) : (
+        <Section
+          help={() =>
+            st.toast({ icon: 'compass', title: 'Экспедиции', text: 'Ингредиенты, эссенция и осколки. Долгие — выгоднее', kind: 'info' })
+          }
+          title="В пути"
+        >
+          <Expeditions />
+        </Section>
+      )}
     </div>
   );
 }

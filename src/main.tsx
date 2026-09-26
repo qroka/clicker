@@ -1,7 +1,13 @@
 import { render } from 'preact';
 import { App } from './ui/App';
-import './styles/main.css';
-import './styles/clean.css';
+import '@fontsource/pixelify-sans/400.css';
+import '@fontsource/pixelify-sans/600.css';
+import '@fontsource/pixelify-sans/700.css';
+import '@fontsource/onest/400.css';
+import '@fontsource/onest/500.css';
+import '@fontsource/onest/600.css';
+import '@fontsource/onest/700.css';
+import './styles/game.css';
 
 // Высота сцены = реально видимая область окна. Статус-бар непрозрачный (black),
 // поэтому игра не заходит под него и не обрезается снизу.
