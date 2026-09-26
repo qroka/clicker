@@ -37,21 +37,24 @@ export const BAL = {
   baseCritChance: 0.05,
   baseCritMult: 5,
   heatPerTap: 4.5,
-  heatDecayPerSec: 16,
+  heatDecayPerSec: 10,
   boilSeconds: 8,
   boilMult: 3,
   wispMinSec: 70,
   wispMaxSec: 160,
   wispLifeSec: 13,
-  offlineBaseHours: 2,
+  offlineBaseHours: 4,
   offlineRate: 0.5,
   stoneBase: 1e11,
   stoneExp: 1 / 3,
-  finalCost: 1e25,
-  stoneBonus: 0.03,
+  finalCost: 3e25,
+  goldRushCooldownSec: 600,
+  wispGoldSeconds: 240,
+  distillEssence: { common: 1, rare: 3, epic: 8, legendary: 20 } as Record<Rarity, number>,
+  stoneBonus: 0.01,
   heroBonusPerRecruit: 0.03,
   maxHeroLevel: 50,
-  heroShardsNeeded: { common: 10, rare: 15, epic: 25, legendary: 40 } as Record<Rarity, number>,
+  heroShardsNeeded: { common: 10, rare: 15, epic: 25, legendary: 30 } as Record<Rarity, number>,
   heroGoldCostBase: 5e3,
   heroEssenceBase: { common: 8, rare: 14, epic: 24, legendary: 40 } as Record<Rarity, number>,
   heroEssenceGrowth: 1.28,
@@ -81,7 +84,8 @@ export const HERO_BY_ID = Object.fromEntries(HEROES.map((h) => [h.id, h])) as Re
 export interface Mods {
   prod: number; // общий множитель пассивного дохода (без временных баффов)
   gen: Record<GeneratorId, number>; // множитель по постройкам (вехи, улучшения, бонусы)
-  tapMult: number;
+  tapUp: number; // множитель улучшений тапа (к базовой части)
+  tapMult: number; // общий множитель тапа (герои, таланты, рецепты, день недели)
   tapPct: number;
   critChance: number;
   critMult: number;
@@ -183,6 +187,8 @@ export function computeMods(s: GameState, now: number): Mods {
   sources.push(ch);
 
   const mulOf = (type: BonusType) => sources.reduce((m, p) => m * (1 + p[type]), 1);
+  // Второстепенные бонусы складываются, а не перемножаются — иначе к концу игры они разгоняются в десятки раз.
+  const addOf = (type: BonusType) => 1 + sources.reduce((m, p) => m + p[type], 0);
   const sumOf = (type: BonusType) => sources.reduce((m, p) => m + p[type], 0);
 
   // Постройки: вехи и улучшения
@@ -211,7 +217,8 @@ export function computeMods(s: GameState, now: number): Mods {
     else if (e.kind === 'crit') critUp += e.chance;
   }
 
-  const stones = weak ? 0 : s.stones;
+  // Бонус считается от всех заработанных камней: тратить их на таланты не наказывается.
+  const stones = weak ? 0 : s.stonesEarned;
   const achievements = 1 + s.achievements.length * ACHIEVEMENT_BONUS;
   const guild = 1 + recruited * BAL.heroBonusPerRecruit;
   const final = s.finalDone ? 2 : 1;
@@ -225,17 +232,18 @@ export function computeMods(s: GameState, now: number): Mods {
   return {
     prod,
     gen,
-    tapMult: tapUp * mulOf('tapMult') * (wd.tapMult ?? 1),
+    tapUp,
+    tapMult: addOf('tapMult') * (wd.tapMult ?? 1),
     tapPct,
     critChance: Math.min(0.6, BAL.baseCritChance + critUp + sumOf('critChance')),
-    critMult: BAL.baseCritMult * mulOf('critMult'),
+    critMult: BAL.baseCritMult * addOf('critMult'),
     costMult,
     expSpeed: Math.max(0.3, 1 - sumOf('expeditionSpeed')) * (wd.expSpeed ?? 1),
-    expLoot: mulOf('expeditionLoot'),
-    wisp: mulOf('wispBonus'),
-    offlineRate: BAL.offlineRate * mulOf('offlineMult') * (wd.offlineMult ?? 1),
+    expLoot: addOf('expeditionLoot'),
+    wisp: addOf('wispBonus'),
+    offlineRate: Math.min(1, BAL.offlineRate * addOf('offlineMult')) * (wd.offlineMult ?? 1),
     offlineCapSec: (BAL.offlineBaseHours + offlineTalentLv) * 3600,
-    essence: mulOf('essenceMult'),
+    essence: addOf('essenceMult'),
     heroCost: wd.heroCost ?? 1,
     rareLoot: wd.rareLoot ?? 1,
     wispFreq: wd.wispFreq ?? 1,
@@ -274,7 +282,7 @@ export function gps(s: GameState, m: Mods, now: number): number {
 }
 
 export function tapValue(s: GameState, m: Mods, now: number): number {
-  const base = BAL.baseTap * m.tapMult + gps(s, m, now) * m.tapPct;
+  const base = (BAL.baseTap * m.tapUp + gps(s, m, now) * m.tapPct) * m.tapMult;
   return base * buffMult(s, 'tapBoost', now) * buffMult(s, 'tapStorm', now) * buffMult(s, 'boil', now);
 }
 
@@ -298,9 +306,10 @@ export function maxAffordable(s: GameState, m: Mods, id: GeneratorId): number {
 
 export function buyGenerator(s: GameState, m: Mods, id: GeneratorId, count: number): number {
   if (!genAvailable(s, id)) return 0;
-  const n = Math.min(count, maxAffordable(s, m, id));
+  let n = Math.min(count, maxAffordable(s, m, id));
   if (n <= 0) return 0;
-  const cost = genCost(s, m, id, n);
+  let cost = genCost(s, m, id, n);
+  if (cost > s.gold && n > 1) cost = genCost(s, m, id, --n); // погрешность округления
   if (cost > s.gold) return 0;
   s.gold -= cost;
   s.generators[id] += n;
@@ -464,7 +473,7 @@ export function catchWisp(s: GameState, m: Mods, now: number, rng: Rng): WispRew
   const r = rng();
   const guild = s.chapter >= FEATURE_CHAPTER.guild;
   if (r < 0.5) {
-    const amount = Math.max(baseGps(s, m) * 600, tapValue(s, m, now) * 60, 25) * m.wisp;
+    const amount = Math.max(baseGps(s, m) * BAL.wispGoldSeconds, tapValue(s, m, now) * 60, 25) * m.wisp;
     earn(s, amount);
     return { kind: 'gold', amount };
   }
@@ -494,8 +503,14 @@ export interface OfflineReport {
 
 export function applyOffline(s: GameState, now: number): OfflineReport | null {
   const away = (now - s.lastTick) / 1000;
-  if (away < 60) return null;
+  if (away <= 0) return null;
   const m = computeMods(s, now);
+  if (away < 60) {
+    // Короткое переключение приложений: считаем, будто игрок никуда не уходил.
+    earn(s, baseGps(s, m) * away);
+    s.lastTick = now;
+    return null;
+  }
   const capped = Math.min(away, m.offlineCapSec);
   const gold = baseGps(s, m) * capped * m.offlineRate;
   earn(s, gold);
@@ -646,7 +661,9 @@ export function grantShards(s: GameState, n: number, rng: Rng): { hero: string; 
     s.essence += n * 10;
     return null;
   }
-  const h = pool[Math.floor(rng() * pool.length)];
+  // Половина осколков идёт герою, который ближе всех к найму, — чтобы контракты закрывались, а не размазывались.
+  const top = pool.reduce((a, b) => ((s.heroes[b.id]?.shards ?? 0) > (s.heroes[a.id]?.shards ?? 0) ? b : a));
+  const h = rng() < 0.5 ? top : pool[Math.floor(rng() * pool.length)];
   heroState(s, h.id).shards += n;
   return { hero: h.id, n };
 }
@@ -720,10 +737,17 @@ function applyBrew(s: GameState, m: Mods, b: (typeof RECIPES)[number]['brew'], n
       if (b.kind === 'wispRain') s.nextWispAt = now + 1000;
       break;
     case 'haste':
-      for (const e of s.expeditions) e.end = Math.max(now, e.end - b.seconds * 1000);
+      for (const e of s.expeditions) {
+        if (e.hasted) continue;
+        e.hasted = true;
+        e.end = Math.max(now, e.end - b.seconds * 1000);
+      }
       break;
     case 'goldRush':
-      earn(s, baseGps(s, m) * b.mult * 60);
+      if (now >= (s.goldRushReadyAt ?? 0)) {
+        earn(s, baseGps(s, m) * b.mult * 60);
+        s.goldRushReadyAt = now + BAL.goldRushCooldownSec * 1000;
+      }
       break;
   }
 }
@@ -737,6 +761,17 @@ export function canBrewKnown(s: GameState, id: string): boolean {
 }
 
 export const ingredientRarity = (id: IngredientId) => ING_BY_ID[id].rarity;
+
+/** Перегонка лишних ингредиентов в эссенцию — сток для накоплений. */
+export function distill(s: GameState, id: IngredientId, n: number): number {
+  const have = s.ingredients[id] ?? 0;
+  const k = Math.min(have, Math.max(0, Math.floor(n)));
+  if (!k) return 0;
+  s.ingredients[id] -= k;
+  const got = k * BAL.distillEssence[ING_BY_ID[id].rarity];
+  s.essence += got;
+  return got;
+}
 
 // ─── Трансмутация (престиж) ──────────────────────────────────────────────────
 
@@ -843,7 +878,7 @@ function prevDayKey(now: number): string {
 /** Вызывается при запуске и в тике. Возвращает true, если начался новый день. */
 export function rollDaily(s: GameState, m: Mods, now: number, rng: Rng): boolean {
   const today = dayKey(now);
-  if (s.daily.day === today) return false;
+  if (today <= s.daily.day) return false; // тот же день или часы переведены назад
   s.daily.streak = s.daily.day === prevDayKey(now) ? s.daily.streak + 1 : 1;
   s.daily.bestStreak = Math.max(s.daily.bestStreak, s.daily.streak);
   s.daily.day = today;
@@ -883,7 +918,7 @@ export function claimQuest(s: GameState, index: number, rng: Rng): boolean {
   const q = s.daily.quests[index];
   if (!q || q.claimed || q.progress < q.target) return false;
   q.claimed = true;
-  s.essence += QUEST_REWARD.essence;
+  s.essence += Math.round(QUEST_REWARD.essence * dailyEssenceScale(s));
   if (s.chapter >= FEATURE_CHAPTER.guild) grantShards(s, QUEST_REWARD.shards, rng);
   return true;
 }
@@ -895,7 +930,7 @@ export function canClaimAllBonus(s: GameState): boolean {
 export function claimAllBonus(s: GameState, rng: Rng): Partial<Record<IngredientId, number>> | null {
   if (!canClaimAllBonus(s)) return null;
   s.daily.allBonusClaimed = true;
-  s.essence += QUESTS_ALL_BONUS.essence;
+  s.essence += Math.round(QUESTS_ALL_BONUS.essence * dailyEssenceScale(s));
   return grantIngredients(s, QUESTS_ALL_BONUS.ingredients, rng);
 }
 
@@ -911,6 +946,11 @@ export function grantIngredients(s: GameState, n: number, rng: Rng): Partial<Rec
   return got;
 }
 
+/** Ежедневные награды эссенцией растут вместе с игроком, как и экспедиции. */
+export function dailyEssenceScale(s: GameState): number {
+  return computeMods(s, Date.now()).essence * (1 + 0.25 * s.chapter);
+}
+
 export function loginRewardIndex(s: GameState): number {
   return (Math.max(1, s.daily.streak) - 1) % LOGIN_REWARDS.length;
 }
@@ -924,15 +964,17 @@ export function claimLogin(s: GameState, m: Mods, now: number, rng: Rng): boolea
   const r = LOGIN_REWARDS[loginRewardIndex(s)];
   s.daily.loginClaimedDay = dayKey(now);
   if (r.goldMinutes) earn(s, Math.max(baseGps(s, m) * r.goldMinutes * 60, 100));
-  if (r.essence) s.essence += r.essence;
+  if (r.essence) s.essence += Math.round(r.essence * dailyEssenceScale(s));
   if (r.ingredients) grantIngredients(s, r.ingredients, rng);
   if (r.shards) {
     if (s.chapter >= FEATURE_CHAPTER.guild) {
       for (let i = 0; i < r.shards; i++) grantShards(s, 1, rng);
     } else s.essence += r.shards * 10;
   }
-  if (r.stones) {
-    s.stones += r.stones;
+  if (r.stonesPct && s.stonesEarned > 0) {
+    const g = Math.max(1, Math.round(s.stonesEarned * r.stonesPct));
+    s.stones += g;
+    s.stonesEarned += g;
   }
   return true;
 }

@@ -2,7 +2,7 @@ import type { Bonus, GeneratorId } from '../core/types';
 import { GENERATORS } from './world';
 
 /** Порог золота за текущий забег, открывающий главу (индекс = номер главы - 1). */
-export const CHAPTER_THRESHOLDS = [0, 2.5e4, 3e6, 1e9, 1e13, 1e16, 1e19, 1e22];
+export const CHAPTER_THRESHOLDS = [0, 2.5e4, 3e6, 1e11, 1e13, 1e17, 1e20, 1e24];
 
 /** Глава, с которой открывается каждая функция. */
 export const FEATURE_CHAPTER = {
@@ -67,14 +67,14 @@ function buildUpgrades(): UpgradeDef[] {
   });
 
   const tapPct: [number, number, string][] = [
-    [5e4, 0.01, 'Искра вдохновения'],
-    [5e6, 0.01, 'Поток мысли'],
-    [5e8, 0.01, 'Алхимическая интуиция'],
-    [5e11, 0.01, 'Единство с котлом'],
-    [5e14, 0.01, 'Руки золотые'],
+    [5e4, 0.0015, 'Искра вдохновения'],
+    [5e6, 0.0015, 'Поток мысли'],
+    [5e8, 0.0015, 'Алхимическая интуиция'],
+    [5e11, 0.0015, 'Единство с котлом'],
+    [5e14, 0.0015, 'Руки золотые'],
   ];
   tapPct.forEach(([cost, pct, name], i) => {
-    list.push({ id: `tappct_u${i}`, cost, req: { earned: cost / 5 }, effect: { kind: 'tapPct', pct }, emoji: '✋', name, desc: `Тап даёт +${pct * 100}% дохода в секунду` });
+    list.push({ id: `tappct_u${i}`, cost, req: { earned: cost / 5 }, effect: { kind: 'tapPct', pct }, emoji: '✋', name, desc: `Тап даёт +${(pct * 100).toFixed(2).replace('.', ',')}% дохода в секунду` });
   });
 
   const crit: [number, string][] = [
@@ -137,6 +137,7 @@ export const TALENTS: TalentDef[] = [
   { id: 't_prod2', branch: 'idle', tier: 2, maxLevel: 10, baseCost: 10, growth: 1.7, bonus: { type: 'prodMult', value: 0.25 }, emoji: '🏭', name: 'Поточное производство', desc: '+25% к доходу за уровень' },
   { id: 't_heart', branch: 'idle', tier: 3, maxLevel: 5, baseCost: 40, growth: 2, bonus: { type: 'genMult', target: 'world_heart', value: 1 }, emoji: '💖', name: 'Пульс Мироздания', desc: '+100% к Сердцу Мира за уровень' },
   { id: 't_prod3', branch: 'idle', tier: 4, maxLevel: 5, baseCost: 150, growth: 2.2, bonus: { type: 'prodMult', value: 0.5 }, emoji: '🌟', name: 'Золотая жила', desc: '+50% ко всему доходу за уровень' },
+  { id: 't_eternal', branch: 'idle', tier: 5, maxLevel: 999, baseCost: 1000, growth: 1.5, bonus: { type: 'prodMult', value: 0.1 }, emoji: '♾️', name: 'Вечное пламя', desc: '+10% ко всему доходу за уровень, без предела' },
 
   // Ветка «Гильдия» — герои и экспедиции
   { id: 't_ess1', branch: 'guild', tier: 0, maxLevel: 10, baseCost: 1, growth: 1.6, bonus: { type: 'essenceMult', value: 0.15 }, emoji: '💧', name: 'Сбор эссенции', desc: '+15% к эссенции за уровень' },
@@ -185,14 +186,14 @@ export function challengeGoal(c: ChallengeDef, completions: number): number {
 // ─── Ежедневное ──────────────────────────────────────────────────────────────
 
 /** Награды календаря входа (цикл 7 дней). gold — в минутах текущего дохода. */
-export const LOGIN_REWARDS: { goldMinutes?: number; essence?: number; ingredients?: number; shards?: number; stones?: number; label: string; emoji: string }[] = [
-  { goldMinutes: 30, label: '30 мин дохода', emoji: '🪙' },
+export const LOGIN_REWARDS: { goldMinutes?: number; essence?: number; ingredients?: number; shards?: number; stonesPct?: number; label: string; emoji: string }[] = [
+  { goldMinutes: 60, label: '1 ч дохода', emoji: '🪙' },
   { essence: 40, label: '40 эссенции', emoji: '💧' },
   { ingredients: 6, label: '6 ингредиентов', emoji: '🌿' },
-  { goldMinutes: 90, label: '1,5 ч дохода', emoji: '💰' },
+  { goldMinutes: 180, label: '3 ч дохода', emoji: '💰' },
   { essence: 100, label: '100 эссенции', emoji: '🫧' },
   { shards: 5, label: '5 осколков контракта', emoji: '📜' },
-  { shards: 10, essence: 150, ingredients: 10, label: 'Сундук гильдии', emoji: '🎁' },
+  { shards: 10, essence: 150, ingredients: 10, stonesPct: 0.05, label: 'Сундук гильдии', emoji: '🎁' },
 ];
 
 export type QuestKind = 'taps' | 'earn' | 'buyGens' | 'expeditions' | 'brew' | 'wisps' | 'heroLevels' | 'upgrades';

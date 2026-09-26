@@ -16,8 +16,8 @@ function Transmutation() {
   const s = st.s;
   const [confirm, setConfirm] = useState(false);
   const pending = E.pendingStones(s);
-  const now = (1 + s.stones * E.BAL.stoneBonus) - 1;
-  const after = (1 + (s.stones + pending) * E.BAL.stoneBonus) - 1;
+  const now = s.stonesEarned * E.BAL.stoneBonus;
+  const after = (s.stonesEarned + pending) * E.BAL.stoneBonus;
   const can = E.canTransmute(s);
   const nextGold = E.goldForNextStone(s);
   return (
@@ -30,18 +30,18 @@ function Transmutation() {
       <div class="row" style={{ justifyContent: 'center', gap: 18, marginBottom: 12 }}>
         <div>
           <div class="small muted">Сейчас</div>
-          <b class="num">💎 {fmt(s.stones)}</b>
+          <b class="num">💎 {fmt(s.stonesEarned)}</b>
           <div class="small" style={{ color: 'var(--teal)' }}>+{pct(now)} доход</div>
         </div>
         <div style={{ fontSize: 22 }}>→</div>
         <div>
           <div class="small muted">После</div>
-          <b class="num" style={{ color: 'var(--gold)' }}>💎 {fmt(s.stones + pending)}</b>
+          <b class="num" style={{ color: 'var(--gold)' }}>💎 {fmt(s.stonesEarned + pending)}</b>
           <div class="small" style={{ color: 'var(--teal)' }}>+{pct(after)} доход</div>
         </div>
       </div>
       <div class="small muted" style={{ marginBottom: 10 }}>
-        Каждый камень: +{pct(E.BAL.stoneBonus)} к доходу. Следующий камень при 🪙 {fmt(nextGold)} заработанных за всё время.
+        Каждый добытый камень навсегда даёт +{pct(E.BAL.stoneBonus)} к доходу — даже потраченный на таланты. Следующий камень при 🪙 {fmt(nextGold)} заработанных за всё время.
       </div>
       {confirm ? (
         <div class="row">
@@ -120,7 +120,7 @@ function Talents() {
         ))}
       </div>
       <div class="small muted" style={{ textAlign: 'center' }}>
-        Нажми на талант, чтобы изучить. Помни: непотраченные камни тоже дают доход. Сброс бесплатный — экспериментируй с билдами!
+        Нажми на талант, чтобы изучить. Тратить камни не страшно — их бонус к доходу сохраняется. Сброс бесплатный — экспериментируй с билдами!
       </div>
     </>
   );

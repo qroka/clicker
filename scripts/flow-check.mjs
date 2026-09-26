@@ -44,6 +44,9 @@ await page.click('.btn.teal.block');
 await page.waitForTimeout(300);
 console.log('brew msg:', await page.$eval('.card .small[style*="center"]', (e) => e.textContent).catch(() => '—'));
 await shot('brew');
+await page.click('text=⚗️ Перегнать лишнее в эссенцию');
+await page.click('.ing:not(.empty) >> nth=0');
+console.log('distill msg:', await page.$eval('.card .small[style*="center"]', (e) => e.textContent).catch(() => '—'));
 // Трансмутация
 await page.click('.tab:nth-child(5)');
 await page.click('.stone-hero .btn');
@@ -54,7 +57,7 @@ for (let i = 0; i < 10; i++) { if (!(await page.$('.modal, .dialogue'))) break; 
 console.log('gold after:', await page.$eval('.gold-amount', (e) => e.textContent));
 // Меню и достижения
 await page.click('.topbar .icon-btn:last-child');
-await page.click('text=🏆 Достижения');
+await page.click('.sheet .btn.ghost.grow >> nth=0');
 await page.waitForTimeout(300);
 await shot('ach');
 console.log('errors:', errors.length ? errors : 'none');
