@@ -16,7 +16,9 @@ export function spriteUrl(id: string, tint?: string): string | null {
   if (hit) return hit;
   const def = SPRITES[id];
   if (!def) return null;
-  const d = tint ? { ...def, pal: { ...(def.pal ?? {}), L: tint, l: lighten(tint) } } : def;
+  // У котла руна (c) светится цветом зелья главы
+  const extra: Record<string, string> = tint && id === 'cauldron' ? { c: lighten(tint, 0.25) } : {};
+  const d = tint ? { ...def, pal: { ...(def.pal ?? {}), L: tint, l: lighten(tint), ...extra } } : def;
   const canvas = document.createElement('canvas');
   canvas.width = def.w;
   canvas.height = def.h;
