@@ -10,9 +10,10 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "sim": "tsx scripts/simulate.ts",
-    "icons": "node scripts/make-icons.mjs"
+    "icons": "tsx scripts/make-icons.ts"
   },
   "dependencies": {
+    "@fontsource/pixelify-sans": "^5.3.0",
     "preact": "^10.29.8"
   },
   "devDependencies": {

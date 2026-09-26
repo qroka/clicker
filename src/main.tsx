@@ -1,6 +1,10 @@
 import { render } from 'preact';
 import { App } from './ui/App';
+import '@fontsource/pixelify-sans/400.css';
+import '@fontsource/pixelify-sans/600.css';
+import '@fontsource/pixelify-sans/700.css';
 import './styles/main.css';
+import './styles/pixel.css';
 
 // Высота сцены. В iOS-PWA (black-translucent) window.innerHeight бывает меньше экрана
 // на высоту статус-бара — тогда в портрете берём полную высоту экрана.

@@ -9,6 +9,7 @@ import { bonusText, speaker } from './labels';
 import { brewText } from './tabs/Lab';
 import { haptic, sfx } from './fx';
 import type { DialogueLine, IngredientId } from '../core/types';
+import { Ic, Px } from './Px';
 
 function Dialogue({ title, lines, onClose }: { title?: string; lines: DialogueLine[]; onClose: () => void }) {
   const [i, setI] = useState(0);
@@ -39,7 +40,9 @@ function Dialogue({ title, lines, onClose }: { title?: string; lines: DialogueLi
         {title && <div class="dtitle">{title}</div>}
         <div class="dbox">
           <div class="dspeaker">
-            <span>{sp.emoji}</span>
+            <span>
+              <Px id={sp.icon} scale={2} />
+            </span>
             {sp.name}
           </div>
           <div class="dtext">{line.text.slice(0, shown)}</div>
@@ -67,7 +70,7 @@ function IngList({ ings }: { ings: Partial<Record<IngredientId, number>> }) {
     <div class="row" style={{ justifyContent: 'center', flexWrap: 'wrap', gap: 8, margin: '8px 0' }}>
       {Object.entries(ings).map(([id, n]) => (
         <span key={id} class="chip">
-          {ING_BY_ID[id as IngredientId].emoji} ×{n}
+          <Px id={ING_BY_ID[id as IngredientId].id} scale={2} /> ×{n}
         </span>
       ))}
     </div>
@@ -80,16 +83,22 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
     case 'offline':
       body = (
         <>
-          <div class="big-emoji">🌙</div>
+          <div class="big-emoji">
+            <Px id="moon" scale={4} />
+          </div>
           <h2>С возвращением!</h2>
           <p class="muted">
             Пока тебя не было {fmtTime(m.report.seconds)}, ученики и кот работали.
             {m.report.cappedSeconds < m.report.seconds && ` (Лимит оффлайна: ${fmtTime(m.report.cappedSeconds)})`}
           </p>
           <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--gold)', margin: '10px 0' }} class="num">
-            +{fmt(m.report.gold)} 🪙
+            +{fmt(m.report.gold)} <Px id="coin" scale={2} />
           </div>
-          {m.report.expeditionsReady > 0 && <p class="small" style={{ color: 'var(--teal)' }}>🧭 Вернулись экспедиции: {m.report.expeditionsReady}</p>}
+          {m.report.expeditionsReady > 0 && (
+            <p class="small" style={{ color: 'var(--teal)' }}>
+              <Ic id="compass" /> Вернулись экспедиции: {m.report.expeditionsReady}
+            </p>
+          )}
         </>
       );
       break;
@@ -98,15 +107,19 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       const hero = E.HERO_BY_ID[m.heroes[0]]?.name ?? 'Отряд';
       body = (
         <>
-          <div class="big-emoji">{m.loot.success ? '🎒' : '🩹'}</div>
+          <div class="big-emoji">
+            <Px id={m.loot.success ? 'bag' : 'broken'} scale={4} />
+          </div>
           <h2>{m.loot.success ? 'Удачная вылазка!' : 'Неудача…'}</h2>
           <p class="muted small">{story.replaceAll('{hero}', hero).replaceAll('{place}', TEXTS.locations[m.location as keyof typeof TEXTS.locations]?.name ?? '')}</p>
           <IngList ings={m.loot.ingredients} />
           <div class="row" style={{ justifyContent: 'center', gap: 8, flexWrap: 'wrap' }}>
-            <span class="chip">💧 +{m.loot.essence}</span>
+            <span class="chip">
+              <Ic id="essence" /> +{m.loot.essence}
+            </span>
             {m.loot.shards.map((sh, i) => (
               <span key={i} class="chip">
-                📜 {E.HERO_BY_ID[sh.hero]?.emoji} +{sh.n}
+                <Ic id="shard" /> <Px id={sh.hero} scale={1} class="ic" /> +{sh.n}
               </span>
             ))}
           </div>
@@ -119,7 +132,9 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       body = (
         <>
           <div class="rays" />
-          <div class="big-emoji">🧪</div>
+          <div class="big-emoji">
+            <Px id="flask" scale={4} tint={r.color} />
+          </div>
           <h2>Новый рецепт!</h2>
           <h3 style={{ color: r.color, fontSize: 20, margin: '4px 0' }}>{TEXTS.recipes[r.id].name}</h3>
           <p class="muted small">{TEXTS.recipes[r.id].desc}</p>
@@ -133,10 +148,14 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       body = (
         <>
           <div class="rays" />
-          <div class="big-emoji">💎</div>
+          <div class="big-emoji">
+            <Px id="stone" scale={4} />
+          </div>
           <h2>Трансмутация!</h2>
           <p class="muted">Лавка возрождается из пепла — сильнее прежнего.</p>
-          <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--gold)' }}>+{fmt(m.stones)} 💎</div>
+          <div style={{ fontSize: 28, fontWeight: 900, color: 'var(--gold)' }}>
+            +{fmt(m.stones)} <Px id="stone" scale={2} />
+          </div>
         </>
       );
       break;
@@ -145,10 +164,12 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       body = (
         <>
           <div class="rays" />
-          <div class="big-emoji">🏆</div>
+          <div class="big-emoji">
+            <Px id="trophy" scale={4} />
+          </div>
           <h2>Испытание пройдено!</h2>
           <p>
-            {c.emoji} {c.name}
+            <Ic id={c.icon} /> {c.name}
           </p>
           <p style={{ color: 'var(--teal)', fontWeight: 800 }}>Навсегда: {c.rewardText}</p>
         </>
@@ -178,7 +199,9 @@ export function Overlays() {
       <div class="toasts">
         {st.toasts.map((t) => (
           <div key={t.id} class={`toast ${t.kind ? 'toast-' + t.kind : ''}`}>
-            <span class="te">{t.emoji}</span>
+            <span class="te">
+              <Px id={t.icon} scale={2} />
+            </span>
             <div>
               <b>{t.title}</b>
               {t.text && <small>{t.text}</small>}

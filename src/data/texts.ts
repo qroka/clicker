@@ -9,15 +9,15 @@ import type { GameTexts } from '../core/types';
 
 export const TEXTS: GameTexts = {
   speakers: {
-    mentor: { name: 'Мастер Альберих', emoji: '🧙‍♂️' },
-    cat: { name: 'Ртуть', emoji: '🐈‍⬛' },
-    player: { name: 'Ты', emoji: '🧑‍🔬' },
-    narrator: { name: 'Рассказчик', emoji: '📜' },
-    lead: { name: 'Магистр Свинец', emoji: '🌑' },
-    dragon: { name: 'Драконица Пламена', emoji: '🐉' },
-    merzlena: { name: 'Мерзлена', emoji: '🧝‍♀️' },
-    dymalf: { name: 'Дымальф Серый', emoji: '🧙' },
-    doctor_kogda: { name: 'Доктор Когда', emoji: '🕰️' },
+    mentor: { name: 'Мастер Альберих', icon: 'p_mentor' },
+    cat: { name: 'Ртуть', icon: 'p_cat' },
+    player: { name: 'Ты', icon: 'p_player' },
+    narrator: { name: 'Рассказчик', icon: 'scroll' },
+    lead: { name: 'Магистр Свинец', icon: 'p_lead' },
+    dragon: { name: 'Драконица Пламена', icon: 'p_dragon' },
+    merzlena: { name: 'Мерзлена', icon: 'merzlena' },
+    dymalf: { name: 'Дымальф Серый', icon: 'dymalf' },
+    doctor_kogda: { name: 'Доктор Когда', icon: 'doctor_kogda' },
   },
 
   prologue: [
@@ -300,13 +300,13 @@ export const TEXTS: GameTexts = {
   ],
 
   weeklyEvents: [
-    { name: 'День отдыха', desc: 'Лавка отдыхает, а золото — нет: оффлайн-доход ×2.', emoji: '😴' },
-    { name: 'Рыночный день', desc: 'Торговцы щедры: все постройки на 10% дешевле.', emoji: '🛒' },
-    { name: 'Искристый вторник', desc: 'Блуждающие искры появляются вдвое чаще.', emoji: '✨' },
-    { name: 'Попутный ветер', desc: 'Экспедиции проходят на 25% быстрее.', emoji: '🧭' },
-    { name: 'Полнолуние', desc: 'Котёл полон лунной силы: сила тапа ×2.', emoji: '🌕' },
-    { name: 'День наставника', desc: 'Повышение уровня героев стоит на 25% меньше эссенции.', emoji: '🎓' },
-    { name: 'Звездопад', desc: 'Звёзды падают прямо в сумки: +50% к редкой добыче экспедиций.', emoji: '🌠' },
+    { name: 'День отдыха', desc: 'Лавка отдыхает, а золото — нет: оффлайн-доход ×2.', icon: 'sleep' },
+    { name: 'Рыночный день', desc: 'Торговцы щедры: все постройки на 10% дешевле.', icon: 'cart' },
+    { name: 'Искристый вторник', desc: 'Блуждающие искры появляются вдвое чаще.', icon: 'spark' },
+    { name: 'Попутный ветер', desc: 'Экспедиции проходят на 25% быстрее.', icon: 'compass' },
+    { name: 'Полнолуние', desc: 'Котёл полон лунной силы: сила тапа ×2.', icon: 'full_moon' },
+    { name: 'День наставника', desc: 'Повышение уровня героев стоит на 25% меньше эссенции.', icon: 'cap' },
+    { name: 'Звездопад', desc: 'Звёзды падают прямо в сумки: +50% к редкой добыче экспедиций.', icon: 'starfall' },
   ],
 
   expeditionStories: {

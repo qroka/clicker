@@ -170,22 +170,15 @@ export function burst(x: number, y: number, opts: { n?: number; colors?: string[
   }
 }
 
-function drawStar(g: CanvasRenderingContext2D, r: number) {
-  g.beginPath();
-  for (let i = 0; i < 8; i++) {
-    const rr = i % 2 ? r * 0.4 : r;
-    const a = (i * Math.PI) / 4;
-    g.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
-  }
-  g.closePath();
-  g.fill();
-}
-
 function loop() {
   if (!canvas || !c2d) return;
   const g = c2d;
-  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.setTransform(1, 0, 0, 1, 0, 0);
   g.clearRect(0, 0, canvas.width, canvas.height);
+  g.imageSmoothingEnabled = false;
+  // Пиксельная сетка: 1 «пиксель» частицы = 3 CSS-пикселя
+  const P = 3 * dpr;
+  const snap = (v: number) => Math.round((v * dpr) / P) * P;
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parts[i];
     p.life++;
@@ -203,29 +196,29 @@ function loop() {
       p.vy += 0.22;
       p.vx *= 0.98;
     }
-    const a = 1 - p.life / p.max;
-    g.globalAlpha = a;
+    // Пиксельное затухание: частица мигает в конце жизни вместо плавной прозрачности
+    const left = p.max - p.life;
+    if (left < 10 && left % 4 < 2) continue;
+    g.globalAlpha = 1;
     g.fillStyle = p.color;
-    g.save();
-    g.translate(p.x, p.y);
-    g.rotate(p.rot);
-    if (p.kind === 'star') drawStar(g, p.size * 1.6);
-    else if (p.kind === 'bubble') {
-      g.strokeStyle = p.color;
-      g.lineWidth = 1.5;
-      g.beginPath();
-      g.arc(0, 0, p.size * 1.4, 0, Math.PI * 2);
-      g.stroke();
+    const x = snap(p.x);
+    const y = snap(p.y);
+    if (p.kind === 'star') {
+      // «плюсик» 3×3 пикселя
+      g.fillRect(x, y - P, P, P * 3);
+      g.fillRect(x - P, y, P * 3, P);
+    } else if (p.kind === 'bubble') {
+      // полый квадрат 3×3
+      g.fillRect(x - P, y - P, P * 3, P);
+      g.fillRect(x - P, y + P, P * 3, P);
+      g.fillRect(x - P, y, P, P);
+      g.fillRect(x + P, y, P, P);
     } else if (p.kind === 'coin') {
-      g.beginPath();
-      g.ellipse(0, 0, p.size * 1.3, p.size * 1.3 * Math.abs(Math.cos(p.rot * 2)), 0, 0, Math.PI * 2);
-      g.fill();
+      const wide = Math.abs(Math.cos(p.rot * 2)) > 0.5;
+      g.fillRect(x - (wide ? P : 0), y - P, wide ? P * 3 : P, P * 2);
     } else {
-      g.beginPath();
-      g.arc(0, 0, p.size, 0, Math.PI * 2);
-      g.fill();
+      g.fillRect(x, y, P, P);
     }
-    g.restore();
   }
   g.globalAlpha = 1;
   if (parts.length) requestAnimationFrame(loop);

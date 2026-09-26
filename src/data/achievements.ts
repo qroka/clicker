@@ -3,7 +3,7 @@ import { GENERATORS } from './world';
 
 export interface AchievementDef {
   id: string;
-  emoji: string;
+  icon: string;
   name: string;
   desc: string;
   check: (s: GameState) => boolean;
@@ -52,7 +52,7 @@ function build(): AchievementDef[] {
     GEN_TIERS.forEach(([n, title]) => {
       list.push({
         id: `gen_${g.id}_${n}`,
-        emoji: g.emoji,
+        icon: g.id,
         name: `${title}: ${GEN_NAMES[g.id]}`,
         desc: `Собрать ${GEN_NAMES[g.id]}: ${n}`,
         check: (s) => s.generators[g.id] >= n,
@@ -73,30 +73,30 @@ function build(): AchievementDef[] {
     [1e30, 'Абсолютное злато'],
   ];
   earned.forEach(([n, name]) =>
-    list.push({ id: `earn_${n}`, emoji: '🪙', name, desc: `Заработать ${fmtShort(n)} золота за всё время`, check: (s) => s.allTimeEarned >= n }),
+    list.push({ id: `earn_${n}`, icon: 'coin', name, desc: `Заработать ${fmtShort(n)} золота за всё время`, check: (s) => s.allTimeEarned >= n }),
   );
 
   const simple: [string, string, string, (s: GameState) => number, number[]][] = [
-    ['taps', '🫳', 'Неутомимые руки', (s) => s.stats.taps, [100, 1_000, 10_000, 50_000, 150_000]],
-    ['wisps', '✨', 'Ловец искр', (s) => s.stats.wisps, [1, 25, 100, 300, 777]],
-    ['boils', '♨️', 'Котёл кипит', (s) => s.stats.boils, [1, 50, 250, 1000]],
-    ['crits', '💥', 'Критическая масса', (s) => s.stats.crits, [10, 500, 5000]],
-    ['heroes', '🛡️', 'Гильдия растёт', (s) => Object.values(s.heroes).filter((h) => h.recruited).length, [1, 5, 10, 20, 30]],
-    ['recipes', '📖', 'Книга рецептов', (s) => s.recipesKnown.length, [1, 5, 10, 16, 22]],
-    ['brews', '🧪', 'Зельевар', (s) => s.stats.brews, [5, 50, 200]],
-    ['trans', '♻️', 'Трансмутация', (s) => s.transmutations, [1, 3, 10, 25, 50]],
-    ['exps', '🧭', 'Первооткрыватель', (s) => s.stats.expeditions, [1, 25, 100, 300, 700]],
-    ['streak', '📅', 'Постоянный клиент', (s) => s.daily.bestStreak, [3, 7, 14, 30, 60]],
-    ['herolv', '⬆️', 'Наставник героев', (s) => s.stats.heroLevels, [10, 100, 400]],
-    ['chal', '🏆', 'Испытатель', (s) => Object.values(s.challengeDone).reduce((a, b) => a + b, 0), [1, 6, 15, 30]],
+    ['taps', 'hand_tap', 'Неутомимые руки', (s) => s.stats.taps, [100, 1_000, 10_000, 50_000, 150_000]],
+    ['wisps', 'spark', 'Ловец искр', (s) => s.stats.wisps, [1, 25, 100, 300, 777]],
+    ['boils', 'boil', 'Котёл кипит', (s) => s.stats.boils, [1, 50, 250, 1000]],
+    ['crits', 'explosion', 'Критическая масса', (s) => s.stats.crits, [10, 500, 5000]],
+    ['heroes', 'shield', 'Гильдия растёт', (s) => Object.values(s.heroes).filter((h) => h.recruited).length, [1, 5, 10, 20, 30]],
+    ['recipes', 'book', 'Книга рецептов', (s) => s.recipesKnown.length, [1, 5, 10, 16, 22]],
+    ['brews', 'flask', 'Зельевар', (s) => s.stats.brews, [5, 50, 200]],
+    ['trans', 'recycle', 'Трансмутация', (s) => s.transmutations, [1, 3, 10, 25, 50]],
+    ['exps', 'compass', 'Первооткрыватель', (s) => s.stats.expeditions, [1, 25, 100, 300, 700]],
+    ['streak', 'calendar', 'Постоянный клиент', (s) => s.daily.bestStreak, [3, 7, 14, 30, 60]],
+    ['herolv', 'arrow_up', 'Наставник героев', (s) => s.stats.heroLevels, [10, 100, 400]],
+    ['chal', 'trophy', 'Испытатель', (s) => Object.values(s.challengeDone).reduce((a, b) => a + b, 0), [1, 6, 15, 30]],
   ];
-  simple.forEach(([id, emoji, name, get, tiers]) => {
+  simple.forEach(([id, icon, name, get, tiers]) => {
     tiers.forEach((n, i) =>
-      list.push({ id: `${id}_${n}`, emoji, name: `${name} ${['I', 'II', 'III', 'IV', 'V'][i]}`, desc: `Достичь ${n}`, check: (s) => get(s) >= n }),
+      list.push({ id: `${id}_${n}`, icon, name: `${name} ${['I', 'II', 'III', 'IV', 'V'][i]}`, desc: `Достичь ${n}`, check: (s) => get(s) >= n }),
     );
   });
 
-  list.push({ id: 'final', emoji: '💎', name: 'Великое Делание', desc: 'Сварить Философский камень', check: (s) => s.finalDone });
+  list.push({ id: 'final', icon: 'stone', name: 'Великое Делание', desc: 'Сварить Философский камень', check: (s) => s.finalDone });
   return list;
 }
 

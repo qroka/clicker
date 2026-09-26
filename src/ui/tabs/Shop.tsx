@@ -7,15 +7,17 @@ import { fmt, fmtTime, pct } from '../format';
 import { TEXTS } from '../../data/texts';
 import { CHAPTER_THRESHOLDS, CHALLENGE_BY_ID, challengeGoal } from '../../data/progression';
 import type { BuffKind } from '../../core/state';
+import { Ic, Px } from '../Px';
+import { chapterPalette } from '../theme';
 
-const BUFF_VIEW: Record<BuffKind, { emoji: string; label: (m: number) => string; cls: string }> = {
-  boil: { emoji: '♨️', label: (m) => `Кипение ×${m} тап`, cls: 'hot' },
-  frenzy: { emoji: '✨', label: (m) => `Искра ×${m} доход`, cls: 'gold' },
-  tapStorm: { emoji: '⚡', label: (m) => `Шторм ×${m} тап`, cls: 'gold' },
-  prodBoost: { emoji: '🧪', label: (m) => `Зелье ×${m} доход`, cls: '' },
-  tapBoost: { emoji: '💪', label: (m) => `Зелье ×${m} тап`, cls: '' },
-  critBoost: { emoji: '🎯', label: (m) => `Криты ×${m}`, cls: '' },
-  wispRain: { emoji: '🌠', label: () => 'Дождь искр', cls: '' },
+const BUFF_VIEW: Record<BuffKind, { icon: string; label: (m: number) => string; cls: string }> = {
+  boil: { icon: 'boil', label: (m) => `Кипение ×${m} тап`, cls: 'hot' },
+  frenzy: { icon: 'spark', label: (m) => `Искра ×${m} доход`, cls: 'gold' },
+  tapStorm: { icon: 'bolt', label: (m) => `Шторм ×${m} тап`, cls: 'gold' },
+  prodBoost: { icon: 'flask', label: (m) => `Зелье ×${m} доход`, cls: '' },
+  tapBoost: { icon: 'fist', label: (m) => `Зелье ×${m} тап`, cls: '' },
+  critBoost: { icon: 'target', label: (m) => `Криты ×${m}`, cls: '' },
+  wispRain: { icon: 'starfall', label: () => 'Дождь искр', cls: '' },
 };
 
 function contextTip(st: ReturnType<typeof useStore>): string | null {
@@ -23,13 +25,13 @@ function contextTip(st: ReturnType<typeof useStore>): string | null {
   const now = Date.now();
   const m = st.mods();
   const owned = Object.values(s.generators).reduce((a, b) => a + b, 0);
-  if (owned === 0 && s.gold >= 15) return 'Загляни в Мастерскую ⚒️ — купи первую ступку. Пусть работает, пока ты стучишь.';
+  if (owned === 0 && s.gold >= 15) return 'Загляни в Мастерскую — купи первую ступку. Пусть работает, пока ты стучишь.';
   if (owned === 0) return 'Стучи по котлу! Быстро-быстро — и он закипит.';
-  if (E.canClaimLogin(s, now)) return 'Кстати, награда за вход ждёт в календаре 📅. Не благодари.';
-  if (s.expeditions.some((e) => e.end <= now)) return 'Экспедиция вернулась! Беги в Гильдию 🛡️ за добычей.';
+  if (E.canClaimLogin(s, now)) return 'Кстати, награда за вход ждёт в календаре. Не благодари.';
+  if (s.expeditions.some((e) => e.end <= now)) return 'Экспедиция вернулась! Беги в Гильдию за добычей.';
   if (s.chapter >= 2 && s.expeditions.length < E.expeditionSlots(s) && Object.values(s.heroes).some((h) => h.recruited))
     return 'Герои скучают без дела. Отправь их в экспедицию — там ингредиенты!';
-  if (E.canTransmute(s) && E.pendingStones(s) >= Math.max(5, s.stonesEarned)) return `Трансмутация даст ${fmt(E.pendingStones(s))} 💎. Пора переплавить лавку!`;
+  if (E.canTransmute(s) && E.pendingStones(s) >= Math.max(5, s.stonesEarned)) return `Трансмутация даст ${fmt(E.pendingStones(s))} камней. Пора переплавить лавку!`;
   if (E.availableUpgrades(s).some((u) => u.cost <= s.gold)) return 'В Мастерской есть улучшение тебе по карману. Удвоение — это красиво.';
   void m;
   const nav = navigator as Navigator & { standalone?: boolean };
@@ -48,11 +50,15 @@ export function ShopTab() {
   const [tip, setTip] = useState<string | null>(null);
   const catRef = useRef<HTMLDivElement>(null);
   const catPets = useRef(0);
-  const [catFace, setCatFace] = useState('🐈‍⬛');
-  const potion = useRef('#5ee6c4');
+  const [catFace, setCatFace] = useState<'cat_idle' | 'cat_blink' | 'cat_happy'>('cat_idle');
   useEffect(() => {
-    potion.current = getComputedStyle(document.documentElement).getPropertyValue('--potion').trim() || '#5ee6c4';
-  }, [s.chapter]);
+    const iv = setInterval(() => {
+      setCatFace((f) => (f === 'cat_idle' ? 'cat_blink' : f));
+      setTimeout(() => setCatFace((f) => (f === 'cat_blink' ? 'cat_idle' : f)), 160);
+    }, 3800);
+    return () => clearInterval(iv);
+  }, []);
+  const potionColor = chapterPalette(s.chapter)[0];
   const replay = (el: Element | null | undefined, cls: string) => {
     if (!el) return;
     el.classList.remove(cls);
@@ -62,11 +68,11 @@ export function ShopTab() {
   const petCat = () => {
     catPets.current++;
     if (catPets.current % 5 === 0) {
-      setCatFace('😻');
+      setCatFace('cat_happy');
       setTip('Мррр… Ладно, так и быть. Продолжай.');
       [0, 80, 160].forEach((d) => setTimeout(() => haptic('light'), d));
       replay(catRef.current, 'puff');
-      setTimeout(() => setCatFace('🐈‍⬛'), 2500);
+      setTimeout(() => setCatFace('cat_idle'), 2500);
     } else if (tip) setTip(null);
     else showTip(true);
   };
@@ -102,7 +108,7 @@ export function ShopTab() {
       return;
     }
     floatText(x, y - 20, r.crit ? `КРИТ! +${fmt(r.gold, 1)}` : `+${fmt(r.gold, 1)}`, r.crit ? 'crit' : '');
-    burst(x, y, { n: r.crit ? 16 : 2, kind: r.crit ? 'star' : 'bubble', colors: r.crit ? ['#ffb36b', '#fff1b8', '#ff7a3d'] : [potion.current, '#ffffff'], up: 2, speed: r.crit ? 6 : 3 });
+    burst(x, y, { n: r.crit ? 16 : 2, kind: r.crit ? 'star' : 'bubble', colors: r.crit ? ['#feae34', '#fee761', '#f77622'] : [potionColor, '#ffffff'], up: 2, speed: r.crit ? 6 : 3 });
     replay(document.querySelector('.gold-amount'), 'bump');
     if (r.crit) {
       replay(zone.current, 'crit');
@@ -119,7 +125,7 @@ export function ShopTab() {
       replay(catRef.current, 'puff');
       const rect = zone.current?.getBoundingClientRect();
       if (rect) burst(rect.left + rect.width / 2, rect.top + rect.height * 0.45, { n: 40, kind: 'bubble', colors: ['#ff9a4c', '#ffd36b', '#fff'], speed: 8, up: 5, size: 5 });
-      if (s.stats.boils <= 3) st.toast({ emoji: '♨️', title: 'Котёл закипел!', text: 'Тапы ×3 на 8 секунд', kind: 'gold' });
+      if (s.stats.boils <= 3) st.toast({ icon: 'boil', title: 'Котёл закипел!', text: 'Тапы ×3 на 8 секунд', kind: 'gold' });
     }
     st.bump();
   };
@@ -142,7 +148,7 @@ export function ShopTab() {
           : r.kind === 'tapStorm'
             ? `Тапы ×${r.mult} на ${r.seconds} с`
             : `+${r.amount} эссенции`;
-    st.toast({ emoji: '✨', title: 'Искра поймана!', text, kind: 'gold' });
+    st.toast({ icon: 'spark', title: 'Искра поймана!', text, kind: 'gold' });
     st.bump();
   };
 
@@ -164,7 +170,7 @@ export function ShopTab() {
             Глава {s.chapter}. {chText?.title}
           </div>
           <div class="small muted" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {next ? chText?.goal : s.finalDone ? 'Великое Делание свершилось ✨' : 'Свари Философский камень в Рецептах'}
+            {next ? chText?.goal : s.finalDone ? 'Великое Делание свершилось!' : 'Свари Философский камень в Рецептах'}
           </div>
           {next && (
             <div class="bar" style={{ marginTop: 6 }}>
@@ -176,12 +182,12 @@ export function ShopTab() {
       </div>
 
       <div class="buffs">
-        <span class="buff" style={{ background: 'rgba(169,139,255,0.12)', borderColor: 'rgba(169,139,255,0.4)', color: 'var(--violet)' }} onClick={() => st.toast({ emoji: wd.emoji, title: wd.name, text: wd.desc, kind: 'info' })}>
-          {wd.emoji} {wd.name}
+        <span class="buff" style={{ background: 'rgba(169,139,255,0.12)', borderColor: 'rgba(169,139,255,0.4)', color: 'var(--violet)' }} onClick={() => st.toast({ icon: wd.icon, title: wd.name, text: wd.desc, kind: 'info' })}>
+          <Ic id={wd.icon} /> {wd.name}
         </span>
         {challenge && (
           <span class="buff hot">
-            {challenge.emoji} {fmt(s.runEarned)} / {fmt(challengeGoal(challenge, s.challengeDone[challenge.id] ?? 0))}
+            <Ic id={challenge.icon} /> {fmt(s.runEarned)} / {fmt(challengeGoal(challenge, s.challengeDone[challenge.id] ?? 0))}
           </span>
         )}
         {buffs.map((k) => {
@@ -189,15 +195,17 @@ export function ShopTab() {
           const b = s.buffs[k]!;
           return (
             <span key={k} class={`buff ${v.cls}`}>
-              {v.emoji} {v.label(b.mult)} · {fmtTime((b.until - now) / 1000)}
+              <Ic id={v.icon} /> {v.label(b.mult)} · {fmtTime((b.until - now) / 1000)}
             </span>
           );
         })}
       </div>
 
       <div class="cauldron-zone" ref={zone}>
-        <Cauldron heat={s.heat} boiling={boiling} onTap={onTap} />
-        {s.stats.taps < 15 && !tip && <div class="tap-hint">👆 Стучи по котлу!</div>}
+        <Cauldron heat={s.heat} boiling={boiling} potion={potionColor} onTap={onTap} />
+        {s.stats.taps < 15 && !tip && <div class="tap-hint">
+            <Ic id="hand_tap" /> Стучи по котлу!
+          </div>}
         {s.wisp && (
           <button
             class={`wisp ${s.wisp.expires - now < 3000 ? 'fading' : ''}`}
@@ -205,12 +213,12 @@ export function ShopTab() {
             onPointerDown={onWisp}
             aria-label="Искра"
           >
-            ✨
+            <Px id="spark" scale={3} />
           </button>
         )}
         <div class="cat">
           <div class="cat-body" ref={catRef} onClick={petCat}>
-            {catFace}
+            <Px id={catFace} scale={3} />
           </div>
           {tip && !st.modals.length && !st.toasts.length && (
             <div class="bubble" onClick={() => setTip(null)}>

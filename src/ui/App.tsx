@@ -5,6 +5,8 @@ import { fmt } from './format';
 import { attachCanvas, attachFloatLayer, unlockAudio } from './fx';
 import { FEATURE_CHAPTER } from '../data/progression';
 import { HEROES } from '../data/heroes';
+import { Ic, Px } from './Px';
+import { chapterPalette } from './theme';
 import { ShopTab } from './tabs/Shop';
 import { WorkshopTab } from './tabs/Workshop';
 import { GuildTab } from './tabs/Guild';
@@ -13,33 +15,10 @@ import { KnowledgeTab } from './tabs/Knowledge';
 import { Overlays } from './Overlays';
 import { Sheets } from './Sheets';
 
-/** Палитры по главам: цвет зелья и свечения фона. */
-const PALETTES: [string, string][] = [
-  ['#5ee6c4', '#7b5cff'],
-  ['#7be38e', '#4f7bff'],
-  ['#ffb347', '#ff5d73'],
-  ['#ff6f91', '#7b5cff'],
-  ['#7fd3ff', '#a98bff'],
-  ['#3fcf8e', '#ff7a3d'],
-  ['#b388ff', '#5a2fd0'],
-  ['#ffd36b', '#ff3355'],
-];
+
 
 export function Coin() {
-  return (
-    <svg class="coin" viewBox="0 0 24 24">
-      <defs>
-        <radialGradient id="coinG" cx="35%" cy="30%" r="75%">
-          <stop offset="0" stop-color="#fff4c2" />
-          <stop offset="0.5" stop-color="#f9cf72" />
-          <stop offset="1" stop-color="#c77a12" />
-        </radialGradient>
-      </defs>
-      <circle cx="12" cy="12" r="11" fill="url(#coinG)" stroke="#8a4d05" stroke-width="1" />
-      <circle cx="12" cy="12" r="7.5" fill="none" stroke="#b86d12" stroke-width="1" opacity="0.7" />
-      <path d="M12 6.5 l1.6 3.4 3.7.4-2.8 2.5.8 3.6L12 14.6l-3.3 1.8.8-3.6-2.8-2.5 3.7-.4z" fill="#b86d12" opacity="0.85" />
-    </svg>
-  );
+  return <Px id="coin" scale={2} class="coin" />;
 }
 
 /** Плавный счётчик золота: обновляется каждый кадр без перерисовки Preact. */
@@ -86,31 +65,34 @@ function TopBar() {
       <div class="chips">
         {s.chapter >= FEATURE_CHAPTER.guild && (
           <span class="chip" title="Эссенция">
-            💧<span class="num">{fmt(s.essence)}</span>
+            <Ic id="essence" />
+            <span class="num">{fmt(s.essence)}</span>
           </span>
         )}
         {s.stonesEarned > 0 && (
           <span class="chip" title="Философские камни">
-            💎<span class="num">{fmt(s.stones)}</span>
+            <Ic id="stone" />
+            <span class="num">{fmt(s.stones)}</span>
           </span>
         )}
       </div>
       <button class="icon-btn" onClick={() => st.openSheet('daily')} aria-label="Ежедневное">
-        📅{dailyCount > 0 && <span class="badge">{dailyCount}</span>}
+        <Px id="calendar" scale={2} />
+        {dailyCount > 0 && <span class="badge">{dailyCount}</span>}
       </button>
       <button class="icon-btn" onClick={() => st.openSheet('settings')} aria-label="Меню">
-        ☰
+        <Px id="menu" scale={2} />
       </button>
     </header>
   );
 }
 
 const TABS: { id: Tab; icon: string; label: string; chapter: number }[] = [
-  { id: 'shop', icon: '🧪', label: 'Лавка', chapter: 1 },
-  { id: 'workshop', icon: '⚒️', label: 'Мастерская', chapter: 1 },
-  { id: 'guild', icon: '🛡️', label: 'Гильдия', chapter: FEATURE_CHAPTER.guild },
-  { id: 'lab', icon: '📖', label: 'Рецепты', chapter: FEATURE_CHAPTER.recipes },
-  { id: 'knowledge', icon: '💎', label: 'Знания', chapter: FEATURE_CHAPTER.transmutation },
+  { id: 'shop', icon: 'flask', label: 'Лавка', chapter: 1 },
+  { id: 'workshop', icon: 'hammer', label: 'Мастерская', chapter: 1 },
+  { id: 'guild', icon: 'shield', label: 'Гильдия', chapter: FEATURE_CHAPTER.guild },
+  { id: 'lab', icon: 'book', label: 'Рецепты', chapter: FEATURE_CHAPTER.recipes },
+  { id: 'knowledge', icon: 'stone', label: 'Знания', chapter: FEATURE_CHAPTER.transmutation },
 ];
 
 function TabBar() {
@@ -132,13 +114,15 @@ function TabBar() {
             class={`tab ${st.tab === t.id ? 'active' : ''} ${locked ? 'locked' : ''}`}
             onClick={() => {
               if (locked) {
-                st.toast({ emoji: '🔒', title: t.label, text: `Откроется в главе ${t.chapter}`, kind: 'info' });
+                st.toast({ icon: 'lock', title: t.label, text: `Откроется в главе ${t.chapter}`, kind: 'info' });
                 return;
               }
               st.setTab(t.id);
             }}
           >
-            <span class="ti">{locked ? '🔒' : t.icon}</span>
+            <span class="ti">
+              <Px id={locked ? 'lock' : t.icon} scale={2} />
+            </span>
             {t.label}
             {!locked && dots[t.id] && st.tab !== t.id && <span class="dot-badge" />}
           </button>
@@ -162,7 +146,7 @@ export function App() {
     return () => window.removeEventListener('pointerdown', unlock);
   }, []);
 
-  const [potion, glow] = PALETTES[Math.min(PALETTES.length, st.s.chapter) - 1];
+  const [potion, glow] = chapterPalette(st.s.chapter);
   useEffect(() => {
     document.documentElement.style.setProperty('--potion', potion);
     document.documentElement.style.setProperty('--glow', glow);
