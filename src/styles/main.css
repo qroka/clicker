@@ -133,7 +133,7 @@ h3 {
   min-width: 0;
 }
 .gold-amount {
-  font-size: 28px;
+  font-size: clamp(22px, 6.6vw, 28px);
   font-weight: 800;
   color: var(--gold);
   text-shadow: 0 0 18px rgba(255, 190, 80, 0.45);
@@ -162,8 +162,13 @@ h3 {
 }
 .chips {
   display: flex;
-  gap: 6px;
-  align-items: center;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-end;
+}
+.chips .chip {
+  padding: 2px 8px;
+  font-size: 12px;
 }
 .chip {
   display: inline-flex;
@@ -179,9 +184,9 @@ h3 {
 }
 .icon-btn {
   position: relative;
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
   display: grid;
   place-items: center;
   background: var(--card);
@@ -233,6 +238,12 @@ h3 {
   -webkit-overflow-scrolling: touch;
   padding: 4px 14px calc(var(--tab-h) + var(--sab) + 18px);
   scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(#000 calc(100% - var(--tab-h) - var(--sab) - 28px), transparent calc(100% - var(--tab-h) - var(--sab) - 4px));
+  mask-image: linear-gradient(#000 calc(100% - var(--tab-h) - var(--sab) - 28px), transparent calc(100% - var(--tab-h) - var(--sab) - 4px));
+}
+.main.no-scroll {
+  -webkit-mask-image: none;
+  mask-image: none;
 }
 .main::-webkit-scrollbar {
   display: none;
@@ -253,7 +264,7 @@ h3 {
   height: var(--tab-h);
   display: flex;
   border-radius: 22px;
-  background: rgba(30, 19, 48, 0.78);
+  background: rgba(24, 15, 38, 0.94);
   backdrop-filter: blur(18px) saturate(1.4);
   -webkit-backdrop-filter: blur(18px) saturate(1.4);
   border: 1px solid var(--line);
@@ -372,8 +383,13 @@ h3 {
 }
 .btn.disabled,
 .btn:disabled {
-  filter: grayscale(1) brightness(0.55);
-  box-shadow: 0 3px 0 #3a2c4a;
+  filter: none;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--dim);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.btn.disabled:active {
+  transform: none;
 }
 .btn.teal {
   color: #06261f;
@@ -418,8 +434,10 @@ h3 {
   border: 1px solid var(--line);
 }
 .seg button {
-  flex: 1;
-  padding: 6px 10px;
+  flex: 1 0 auto;
+  min-height: 38px;
+  white-space: nowrap;
+  padding: 6px 8px;
   border-radius: 9px;
   font-weight: 800;
   font-size: 12.5px;
@@ -488,7 +506,8 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 4px 9px;
+  min-height: 32px;
+  padding: 4px 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
@@ -605,6 +624,11 @@ h3 {
   gap: 6px;
   z-index: 3;
   max-width: 88%;
+  pointer-events: none;
+}
+.cat-body,
+.bubble {
+  pointer-events: auto;
 }
 .cat-body {
   font-size: 44px;
@@ -634,6 +658,7 @@ h3 {
   line-height: 1.3;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   animation: pop-in 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
+  max-width: 240px;
 }
 @keyframes pop-in {
   from {
@@ -712,6 +737,7 @@ h3 {
   color: var(--gold);
   text-shadow:
     0 2px 0 #7a4200,
+    0 0 4px #000,
     0 0 12px rgba(255, 190, 80, 0.6);
   animation: float-up 0.9s ease-out forwards;
   white-space: nowrap;
@@ -807,7 +833,7 @@ h3 {
 }
 .gen-name {
   font-weight: 800;
-  font-size: 15px;
+  font-size: 14px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -824,7 +850,7 @@ h3 {
   margin-top: 5px;
 }
 .gen .btn {
-  min-width: 92px;
+  min-width: 84px;
   flex-direction: column;
   gap: 0;
   padding: 7px 10px;
@@ -1349,13 +1375,21 @@ h3 {
   font-size: 22px;
   color: var(--gold);
   text-shadow: 0 2px 12px rgba(0, 0, 0, 0.8);
-  margin-bottom: 10px;
+  margin-bottom: 32px;
+}
+.dialogue::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(transparent 35%, rgba(8, 4, 14, 0.8));
+  pointer-events: none;
 }
 .dialogue .dbox {
   position: relative;
   padding: 16px 16px 14px;
   border-radius: 22px;
-  background: linear-gradient(180deg, rgba(253, 244, 225, 0.97), rgba(240, 225, 198, 0.97));
+  background: linear-gradient(180deg, #fdf4e1, #f0e1c6);
   color: #2c1a12;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   min-height: 132px;
@@ -1404,12 +1438,12 @@ h3 {
 /* Тосты */
 .toasts {
   position: fixed;
-  top: calc(var(--sat) + 58px);
+  bottom: calc(var(--sab) + var(--tab-h) + 18px);
   left: 12px;
   right: 12px;
   z-index: 70;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: center;
   gap: 6px;
   pointer-events: none;
@@ -1449,13 +1483,13 @@ h3 {
 }
 @keyframes toast-in {
   from {
-    transform: translateY(-30px) scale(0.9);
+    transform: translateY(30px) scale(0.9);
     opacity: 0;
   }
 }
 @keyframes toast-out {
   to {
-    transform: translateY(-20px);
+    transform: translateY(20px);
     opacity: 0;
   }
 }
@@ -1564,7 +1598,7 @@ h3 {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 .toggle.on {
-  background: var(--green);
+  background: var(--potion);
 }
 .toggle.on::after {
   transform: translateX(20px);
@@ -1643,4 +1677,81 @@ textarea.code {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
   }
+}
+
+.recipe .btn {
+  padding: 8px 12px;
+}
+
+/* ─── Сочность ─── */
+.gold-amount.bump .coin {
+  animation: coin-flip 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.gold-amount.bump .num {
+  display: inline-block;
+  animation: num-pop 0.22s;
+}
+@keyframes coin-flip {
+  50% {
+    transform: rotateY(180deg) scale(1.25);
+  }
+}
+@keyframes num-pop {
+  40% {
+    transform: scale(1.07);
+    text-shadow: 0 0 26px #ffd98a;
+  }
+}
+.cat-body.jump {
+  animation: cat-jump 0.5s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes cat-jump {
+  40% {
+    transform: translateY(-22px) rotate(-10deg);
+  }
+}
+.cat-body.puff {
+  animation: cat-puff 0.6s;
+}
+@keyframes cat-puff {
+  30% {
+    transform: scale(1.25, 1.15);
+  }
+}
+.cauldron-zone.crit::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, rgba(255, 190, 110, 0.35), transparent 60%);
+  animation: crit-flash 0.25s ease-out forwards;
+}
+@keyframes crit-flash {
+  to {
+    opacity: 0;
+  }
+}
+.gen .bar.near > i {
+  background: linear-gradient(90deg, var(--violet), #fff, var(--violet)) 0 / 200%;
+  animation: shimmer 1.1s linear infinite;
+}
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+.gen-icon .owned.pop {
+  animation: pop-in 0.3s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+.seg .cnt {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  margin-left: 4px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--rose);
+  color: #fff;
+  font-size: 11px;
 }

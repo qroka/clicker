@@ -101,7 +101,11 @@ export function WorkshopTab() {
             <div key={g.id} class={`gen ${can ? 'can' : ''} ${available ? '' : 'locked'}`}>
               <div class="gen-icon">
                 {g.emoji}
-                {owned > 0 && <span class="owned num">{owned}</span>}
+                {owned > 0 && (
+                  <span key={owned} class="owned num pop">
+                    {owned}
+                  </span>
+                )}
               </div>
               <div class="grow">
                 <div class="gen-name">{txt.name}</div>
@@ -115,7 +119,7 @@ export function WorkshopTab() {
                   )}
                 </div>
                 {nextMs && owned > 0 && (
-                  <div class="bar violet" title={`До ×2: ${owned}/${nextMs}`}>
+                  <div class={`bar violet ${(owned - prevMs) / (nextMs - prevMs) >= 0.9 ? 'near' : ''}`} title={`До ×2: ${owned}/${nextMs}`}>
                     <i style={{ width: `${((owned - prevMs) / (nextMs - prevMs)) * 100}%` }} />
                   </div>
                 )}

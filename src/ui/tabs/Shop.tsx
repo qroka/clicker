@@ -46,6 +46,30 @@ export function ShopTab() {
   const m = st.mods();
   const zone = useRef<HTMLDivElement>(null);
   const [tip, setTip] = useState<string | null>(null);
+  const catRef = useRef<HTMLDivElement>(null);
+  const catPets = useRef(0);
+  const [catFace, setCatFace] = useState('🐈‍⬛');
+  const potion = useRef('#5ee6c4');
+  useEffect(() => {
+    potion.current = getComputedStyle(document.documentElement).getPropertyValue('--potion').trim() || '#5ee6c4';
+  }, [s.chapter]);
+  const replay = (el: Element | null | undefined, cls: string) => {
+    if (!el) return;
+    el.classList.remove(cls);
+    void (el as HTMLElement).offsetWidth;
+    el.classList.add(cls);
+  };
+  const petCat = () => {
+    catPets.current++;
+    if (catPets.current % 5 === 0) {
+      setCatFace('😻');
+      setTip('Мррр… Ладно, так и быть. Продолжай.');
+      [0, 80, 160].forEach((d) => setTimeout(() => haptic('light'), d));
+      replay(catRef.current, 'puff');
+      setTimeout(() => setCatFace('🐈‍⬛'), 2500);
+    } else if (tip) setTip(null);
+    else showTip(true);
+  };
   const tipIdx = useRef(Math.floor(Math.random() * TEXTS.catTips.length));
 
   const showTip = (force = false) => {
@@ -77,9 +101,12 @@ export function ShopTab() {
       floatText(x, y - 20, 'Не отвечает…', 'teal');
       return;
     }
-    floatText(x, y - 20, `+${fmt(r.gold, 1)}`, r.crit ? 'crit' : '');
-    burst(x, y, { n: r.crit ? 16 : 5, kind: r.crit ? 'star' : 'bubble', colors: r.crit ? ['#ffb36b', '#fff1b8', '#ff7a3d'] : [getComputedStyle(document.documentElement).getPropertyValue('--potion').trim() || '#5ee6c4', '#ffffff'], up: 2, speed: r.crit ? 6 : 3 });
+    floatText(x, y - 20, r.crit ? `КРИТ! +${fmt(r.gold, 1)}` : `+${fmt(r.gold, 1)}`, r.crit ? 'crit' : '');
+    burst(x, y, { n: r.crit ? 16 : 2, kind: r.crit ? 'star' : 'bubble', colors: r.crit ? ['#ffb36b', '#fff1b8', '#ff7a3d'] : [potion.current, '#ffffff'], up: 2, speed: r.crit ? 6 : 3 });
+    replay(document.querySelector('.gold-amount'), 'bump');
     if (r.crit) {
+      replay(zone.current, 'crit');
+      replay(catRef.current, 'jump');
       sfx.crit();
       haptic('medium');
     } else {
@@ -89,6 +116,7 @@ export function ShopTab() {
     if (r.boiled) {
       sfx.boil();
       haptic('heavy');
+      replay(catRef.current, 'puff');
       const rect = zone.current?.getBoundingClientRect();
       if (rect) burst(rect.left + rect.width / 2, rect.top + rect.height * 0.45, { n: 40, kind: 'bubble', colors: ['#ff9a4c', '#ffd36b', '#fff'], speed: 8, up: 5, size: 5 });
       if (s.stats.boils <= 3) st.toast({ emoji: '♨️', title: 'Котёл закипел!', text: 'Тапы ×3 на 8 секунд', kind: 'gold' });
@@ -180,9 +208,15 @@ export function ShopTab() {
             ✨
           </button>
         )}
-        <div class="cat" onClick={() => (tip ? setTip(null) : showTip(true))}>
-          <div class="cat-body">🐈‍⬛</div>
-          {tip && <div class="bubble">{tip}</div>}
+        <div class="cat">
+          <div class="cat-body" ref={catRef} onClick={petCat}>
+            {catFace}
+          </div>
+          {tip && !st.modals.length && !st.toasts.length && (
+            <div class="bubble" onClick={() => setTip(null)}>
+              {tip}
+            </div>
+          )}
         </div>
       </div>
       <div class="tap-value">

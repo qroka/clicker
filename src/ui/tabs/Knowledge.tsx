@@ -144,7 +144,7 @@ function Challenges() {
           const goal = challengeGoal(c, done);
           return (
             <div key={c.id} class={`challenge ${active ? 'active' : ''}`}>
-              <div style={{ fontSize: 30 }}>{c.emoji}</div>
+              <div style={{ fontSize: 30, width: 44, flex: 'none', textAlign: 'center' }}>{c.emoji}</div>
               <div class="grow">
                 <b>{c.name}</b>
                 <div class="small muted">{c.desc}</div>
@@ -174,7 +174,7 @@ function Challenges() {
                   Точно?
                 </button>
               ) : (
-                <button class={`btn ${s.challenge ? 'disabled' : ''}`} onClick={() => !s.challenge && setConfirm(c.id)}>
+                <button class={`btn ghost ${s.challenge ? 'disabled' : ''}`} onClick={() => !s.challenge && setConfirm(c.id)}>
                   Начать
                 </button>
               )}

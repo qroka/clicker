@@ -156,7 +156,7 @@ export function burst(x: number, y: number, opts: { n?: number; colors?: string[
       vx: Math.cos(a) * v,
       vy: Math.sin(a) * v - (opts.up ?? 3),
       life: 0,
-      max: 40 + Math.random() * 30,
+      max: opts.kind === 'bubble' ? 25 + Math.random() * 15 : 40 + Math.random() * 30,
       size: (opts.size ?? 4) * (0.6 + Math.random() * 0.8),
       color: colors[Math.floor(Math.random() * colors.length)],
       kind: opts.kind ?? 'dot',

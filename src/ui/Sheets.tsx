@@ -180,7 +180,7 @@ function HeroView({ id }: { id: string }) {
           <div class="btn block disabled">Максимальный уровень</div>
         ) : (
           <button class={`btn teal block big ${s.essence >= cost ? '' : 'disabled'}`} onClick={(e) => st.levelHero(id) && burst(e.clientX, e.clientY, { n: 20, kind: 'star', colors: ['#5ee6c4', '#fff'] })}>
-            ⬆️ Повысить уровень · 💧 {fmt(cost)}
+            {s.essence >= cost ? `⬆️ Повысить уровень · 💧 ${fmt(cost)}` : `Нужно ещё 💧 ${fmt(cost - s.essence)}`}
           </button>
         )
       ) : h.recruit === 'gold' ? (
@@ -403,7 +403,7 @@ function Settings() {
       </div>
       <div class="row" style={{ margin: '14px 0', gap: 8 }}>
         <button class="btn ghost grow" onClick={() => setView('ach')}>
-          🏆 Достижения {s.achievements.length}/{ACHIEVEMENTS.length}
+          🏆 {s.achievements.length}/{ACHIEVEMENTS.length}
         </button>
         <button class="btn ghost grow" onClick={() => setView('save')}>
           💾 Сохранение

@@ -139,7 +139,7 @@ export function GuildTab() {
             Герои
           </button>
           <button class={sub === 'exp' ? 'on' : ''} onClick={() => setSub('exp')}>
-            Экспедиции{ready ? ` (${ready})` : ''}
+            Экспедиции{ready > 0 && <span class="cnt">{ready}</span>}
           </button>
         </div>
       </div>
