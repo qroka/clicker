@@ -5,6 +5,7 @@ import { MILESTONES } from '../../data/progression';
 import { TEXTS } from '../../data/texts';
 import { fmt } from '../format';
 import { burst } from '../fx';
+import { Ic, Px } from '../Px';
 
 function upgradeName(id: string, fallback: string): string {
   const m = /^(.+)_u(\d)$/.exec(id);
@@ -44,10 +45,14 @@ export function WorkshopTab() {
                     if (st.buyUpgrade(u.id)) burst(e.clientX, e.clientY, { n: 18, kind: 'star' });
                   }}
                 >
-                  <span class="ue">{u.emoji}</span>
+                  <span class="ue">
+                    <Px id={u.icon} scale={2} />
+                  </span>
                   <span class="un">{upgradeName(u.id, u.name)}</span>
                   <span class="ud">{u.desc}</span>
-                  <span class="uc num">🪙 {fmt(u.cost)}</span>
+                  <span class="uc num">
+                    <Ic id="coin" /> {fmt(u.cost)}
+                  </span>
                 </button>
               );
             })}
@@ -89,10 +94,12 @@ export function WorkshopTab() {
           if (mystery) {
             return (
               <div key={g.id} class="gen locked">
-                <div class="gen-icon">❔</div>
+                <div class="gen-icon">
+                  <Px id="question" scale={2} />
+                </div>
                 <div class="grow">
                   <div class="gen-name">???</div>
-                  <div class="gen-sub">Откроется, когда накопишь 🪙 {fmt(g.baseCost * 0.6)}</div>
+                  <div class="gen-sub">Откроется, когда накопишь <Ic id="coin" /> {fmt(g.baseCost * 0.6)}</div>
                 </div>
               </div>
             );
@@ -100,7 +107,7 @@ export function WorkshopTab() {
           return (
             <div key={g.id} class={`gen ${can ? 'can' : ''} ${available ? '' : 'locked'}`}>
               <div class="gen-icon">
-                {g.emoji}
+                <Px id={g.id} scale={2} />
                 {owned > 0 && (
                   <span key={owned} class="owned num pop">
                     {owned}
@@ -131,7 +138,9 @@ export function WorkshopTab() {
                   if (st.buyGen(g.id)) burst(e.clientX, e.clientY, { n: 10, kind: 'coin' });
                 }}
               >
-                <span class="cost num">🪙 {fmt(cost)}</span>
+                <span class="cost num">
+                  <Ic id="coin" /> {fmt(cost)}
+                </span>
                 <small>
                   +{amount} {nextMs && owned > 0 ? `· ×2 на ${nextMs}` : ''}
                 </small>

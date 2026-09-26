@@ -4,6 +4,7 @@ import * as E from '../../core/engine';
 import { CHALLENGES, CHALLENGE_MAX, TALENTS, challengeGoal } from '../../data/progression';
 import { fmt, pct } from '../format';
 import { burst } from '../fx';
+import { Ic, Px } from '../Px';
 
 const BRANCHES = [
   { id: 'tap', name: 'Руки мастера' },
@@ -22,7 +23,9 @@ function Transmutation() {
   const nextGold = E.goldForNextStone(s);
   return (
     <div class="card stone-hero">
-      <div class="stone-gem">💎</div>
+      <div class="stone-gem">
+        <Px id="stone" scale={4} />
+      </div>
       <h2 style={{ color: 'var(--gold)', fontSize: 22 }}>Трансмутация</h2>
       <div class="small muted" style={{ margin: '4px 0 12px' }}>
         Переплавь лавку: золото, постройки и улучшения сгорят, а философские камни останутся навсегда. Герои, рецепты, ингредиенты и таланты — тоже.
@@ -30,18 +33,22 @@ function Transmutation() {
       <div class="row" style={{ justifyContent: 'center', gap: 18, marginBottom: 12 }}>
         <div>
           <div class="small muted">Сейчас</div>
-          <b class="num">💎 {fmt(s.stonesEarned)}</b>
+          <b class="num">
+            <Ic id="stone" /> {fmt(s.stonesEarned)}
+          </b>
           <div class="small" style={{ color: 'var(--teal)' }}>+{pct(now)} доход</div>
         </div>
-        <div style={{ fontSize: 22 }}>→</div>
+        <Px id="arrow_right" scale={2} />
         <div>
           <div class="small muted">После</div>
-          <b class="num" style={{ color: 'var(--gold)' }}>💎 {fmt(s.stonesEarned + pending)}</b>
+          <b class="num" style={{ color: 'var(--gold)' }}>
+            <Ic id="stone" /> {fmt(s.stonesEarned + pending)}
+          </b>
           <div class="small" style={{ color: 'var(--teal)' }}>+{pct(after)} доход</div>
         </div>
       </div>
       <div class="small muted" style={{ marginBottom: 10 }}>
-        Каждый добытый камень навсегда даёт +{pct(E.BAL.stoneBonus)} к доходу — даже потраченный на таланты. Следующий камень при 🪙 {fmt(nextGold)} заработанных за всё время.
+        Каждый добытый камень навсегда даёт +{pct(E.BAL.stoneBonus)} к доходу — даже потраченный на таланты. Следующий камень при <Ic id="coin" /> {fmt(nextGold)} заработанных за всё время.
       </div>
       {confirm ? (
         <div class="row">
@@ -60,7 +67,13 @@ function Transmutation() {
         </div>
       ) : (
         <button class={`btn violet block big ${can ? '' : 'disabled'}`} onClick={() => can && setConfirm(true)}>
-          {can ? `♻️ Трансмутировать: +${fmt(pending)} 💎` : 'Нужен хотя бы 1 камень'}
+          {can ? (
+            <>
+              <Ic id="recycle" /> Трансмутировать: +{fmt(pending)} <Ic id="stone" />
+            </>
+          ) : (
+            'Нужен хотя бы 1 камень'
+          )}
         </button>
       )}
     </div>
@@ -78,10 +91,10 @@ function Talents() {
           class="small muted"
           onClick={() => {
             const r = st.do((s) => E.respecTalents(s));
-            if (r) st.toast({ emoji: '🔄', title: 'Таланты сброшены', text: `Возвращено ${fmt(r)} 💎`, kind: 'info' });
+            if (r) st.toast({ icon: 'refresh', title: 'Таланты сброшены', text: `Возвращено камней: ${fmt(r)}`, kind: 'info' });
           }}
         >
-          🔄 Сбросить
+          <Ic id="refresh" /> Сбросить
         </button>
       </div>
       <div class="talent-cols">
@@ -103,15 +116,21 @@ function Talents() {
                       class={`talent ${can ? 'can' : ''} ${avail ? '' : 'locked'} ${maxed ? 'maxed' : ''}`}
                       onClick={(e) => {
                         if (st.do((s) => E.buyTalent(s, t.id))) burst(e.clientX, e.clientY, { n: 16, kind: 'star', colors: ['#a98bff', '#fff'] });
-                        else st.toast({ emoji: t.emoji, title: t.name, text: t.desc, kind: 'info' });
+                        else st.toast({ icon: t.icon, title: t.name, text: t.desc, kind: 'info' });
                       }}
                     >
-                      <span class="te">{t.emoji}</span>
+                      <span class="te">
+                        <Px id={t.icon} scale={2} />
+                      </span>
                       <span class="tn">{t.name}</span>
                       <span class="tl num">
                         {lv}/{t.maxLevel}
                       </span>
-                      {!maxed && <span class="small num" style={{ color: can ? 'var(--violet)' : 'var(--dim)', fontWeight: 800 }}>💎 {fmt(cost)}</span>}
+                      {!maxed && (
+                        <span class="small num" style={{ color: can ? 'var(--violet)' : 'var(--dim)', fontWeight: 800 }}>
+                          <Ic id="stone" /> {fmt(cost)}
+                        </span>
+                      )}
                     </button>
                   </div>
                 );
@@ -144,12 +163,14 @@ function Challenges() {
           const goal = challengeGoal(c, done);
           return (
             <div key={c.id} class={`challenge ${active ? 'active' : ''}`}>
-              <div style={{ fontSize: 30, width: 44, flex: 'none', textAlign: 'center' }}>{c.emoji}</div>
+              <div style={{ width: 44, flex: 'none', display: 'grid', placeItems: 'center' }}>
+                <Px id={c.icon} scale={2} />
+              </div>
               <div class="grow">
                 <b>{c.name}</b>
                 <div class="small muted">{c.desc}</div>
                 <div class="small" style={{ color: 'var(--teal)', fontWeight: 700 }}>
-                  Цель: 🪙 {fmt(goal)} · Награда: {c.rewardText}
+                  Цель: <Ic id="coin" /> {fmt(goal)} · Награда: {c.rewardText}
                 </div>
                 <div class="pips" style={{ marginTop: 4 }}>
                   {Array.from({ length: CHALLENGE_MAX }).map((_, i) => (
@@ -162,7 +183,7 @@ function Challenges() {
                   Сдаться
                 </button>
               ) : done >= CHALLENGE_MAX ? (
-                <span style={{ fontSize: 22 }}>🏆</span>
+                <Px id="trophy" scale={2} />
               ) : confirm === c.id ? (
                 <button
                   class="btn violet"

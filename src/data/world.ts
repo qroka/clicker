@@ -4,46 +4,46 @@ import type { GeneratorDef, GeneratorId, IngredientDef, IngredientId, LocationDe
 // Цифры подобраны симуляцией: scripts/simulate.ts.
 
 export const GENERATORS: GeneratorDef[] = [
-  { id: 'mortar', baseCost: 15, baseProd: 0.15, emoji: '🥣' },
-  { id: 'apprentice', baseCost: 100, baseProd: 1, emoji: '🧑‍🔬' },
-  { id: 'alembic', baseCost: 1_100, baseProd: 8, emoji: '⚗️' },
-  { id: 'greenhouse', baseCost: 12_000, baseProd: 47, emoji: '🌿' },
-  { id: 'crystal_furnace', baseCost: 130_000, baseProd: 260, emoji: '🔮' },
-  { id: 'homunculus', baseCost: 1.4e6, baseProd: 1_400, emoji: '🧪' },
-  { id: 'dragon_forge', baseCost: 2e7, baseProd: 7_800, emoji: '🐉' },
-  { id: 'moon_observatory', baseCost: 3.3e8, baseProd: 44_000, emoji: '🔭' },
-  { id: 'golem_workshop', baseCost: 5.1e9, baseProd: 260_000, emoji: '🗿' },
-  { id: 'ether_resonator', baseCost: 7.5e10, baseProd: 1.6e6, emoji: '💠' },
-  { id: 'astral_portal', baseCost: 1e12, baseProd: 1e7, emoji: '🌀' },
-  { id: 'world_heart', baseCost: 1.4e13, baseProd: 6.5e7, emoji: '💖' },
+  { id: 'mortar', baseCost: 15, baseProd: 0.15 },
+  { id: 'apprentice', baseCost: 100, baseProd: 1 },
+  { id: 'alembic', baseCost: 1_100, baseProd: 8 },
+  { id: 'greenhouse', baseCost: 12_000, baseProd: 47 },
+  { id: 'crystal_furnace', baseCost: 130_000, baseProd: 260 },
+  { id: 'homunculus', baseCost: 1.4e6, baseProd: 1_400 },
+  { id: 'dragon_forge', baseCost: 2e7, baseProd: 7_800 },
+  { id: 'moon_observatory', baseCost: 3.3e8, baseProd: 44_000 },
+  { id: 'golem_workshop', baseCost: 5.1e9, baseProd: 260_000 },
+  { id: 'ether_resonator', baseCost: 7.5e10, baseProd: 1.6e6 },
+  { id: 'astral_portal', baseCost: 1e12, baseProd: 1e7 },
+  { id: 'world_heart', baseCost: 1.4e13, baseProd: 6.5e7 },
 ];
 
 export const GEN_BY_ID = Object.fromEntries(GENERATORS.map((g) => [g.id, g])) as Record<GeneratorId, GeneratorDef>;
 
 export const INGREDIENTS: IngredientDef[] = [
-  { id: 'moonpetal', emoji: '🌸', rarity: 'common', color: '#c9b8ff' },
-  { id: 'mandrake', emoji: '🌱', rarity: 'common', color: '#8fcf6a' },
-  { id: 'glowcap', emoji: '🍄', rarity: 'common', color: '#6fe0d0' },
-  { id: 'salamander_ash', emoji: '🔥', rarity: 'rare', color: '#ff8a4c' },
-  { id: 'kraken_ink', emoji: '🦑', rarity: 'rare', color: '#5b7cff' },
-  { id: 'star_dust', emoji: '✨', rarity: 'rare', color: '#ffe27a' },
-  { id: 'dragon_scale', emoji: '🐲', rarity: 'epic', color: '#3fcf8e' },
-  { id: 'phoenix_feather', emoji: '🪶', rarity: 'epic', color: '#ff5d73' },
-  { id: 'void_pearl', emoji: '🔮', rarity: 'legendary', color: '#9d6bff' },
-  { id: 'time_sand', emoji: '⏳', rarity: 'legendary', color: '#f4c05a' },
+  { id: 'moonpetal', rarity: 'common', color: '#c9b8ff' },
+  { id: 'mandrake', rarity: 'common', color: '#8fcf6a' },
+  { id: 'glowcap', rarity: 'common', color: '#6fe0d0' },
+  { id: 'salamander_ash', rarity: 'rare', color: '#ff8a4c' },
+  { id: 'kraken_ink', rarity: 'rare', color: '#5b7cff' },
+  { id: 'star_dust', rarity: 'rare', color: '#ffe27a' },
+  { id: 'dragon_scale', rarity: 'epic', color: '#3fcf8e' },
+  { id: 'phoenix_feather', rarity: 'epic', color: '#ff5d73' },
+  { id: 'void_pearl', rarity: 'legendary', color: '#9d6bff' },
+  { id: 'time_sand', rarity: 'legendary', color: '#f4c05a' },
 ];
 
 export const ING_BY_ID = Object.fromEntries(INGREDIENTS.map((i) => [i.id, i])) as Record<IngredientId, IngredientDef>;
 
 export const LOCATIONS: LocationDef[] = [
-  { id: 'whispering_woods', chapter: 2, emoji: '🌲', drops: ['moonpetal', 'mandrake'], favoredRole: 'herbalist', power: 10 },
-  { id: 'mushroom_caves', chapter: 2, emoji: '🍄', drops: ['glowcap', 'mandrake'], favoredRole: 'herbalist', power: 16 },
-  { id: 'volcano', chapter: 3, emoji: '🌋', drops: ['salamander_ash', 'dragon_scale'], favoredRole: 'warrior', power: 30 },
-  { id: 'sunken_coast', chapter: 4, emoji: '🌊', drops: ['kraken_ink', 'void_pearl'], favoredRole: 'merchant', power: 50 },
-  { id: 'sky_ruins', chapter: 5, emoji: '🏛️', drops: ['star_dust', 'phoenix_feather'], favoredRole: 'sage', power: 80 },
-  { id: 'dragon_peaks', chapter: 6, emoji: '🏔️', drops: ['dragon_scale', 'phoenix_feather'], favoredRole: 'warrior', power: 120 },
-  { id: 'abyss', chapter: 7, emoji: '🕳️', drops: ['void_pearl', 'time_sand'], favoredRole: 'sage', power: 170 },
-  { id: 'clockwork_citadel', chapter: 8, emoji: '⚙️', drops: ['time_sand', 'star_dust'], favoredRole: 'merchant', power: 230 },
+  { id: 'whispering_woods', chapter: 2, drops: ['moonpetal', 'mandrake'], favoredRole: 'herbalist', power: 10 },
+  { id: 'mushroom_caves', chapter: 2, drops: ['glowcap', 'mandrake'], favoredRole: 'herbalist', power: 16 },
+  { id: 'volcano', chapter: 3, drops: ['salamander_ash', 'dragon_scale'], favoredRole: 'warrior', power: 30 },
+  { id: 'sunken_coast', chapter: 4, drops: ['kraken_ink', 'void_pearl'], favoredRole: 'merchant', power: 50 },
+  { id: 'sky_ruins', chapter: 5, drops: ['star_dust', 'phoenix_feather'], favoredRole: 'sage', power: 80 },
+  { id: 'dragon_peaks', chapter: 6, drops: ['dragon_scale', 'phoenix_feather'], favoredRole: 'warrior', power: 120 },
+  { id: 'abyss', chapter: 7, drops: ['void_pearl', 'time_sand'], favoredRole: 'sage', power: 170 },
+  { id: 'clockwork_citadel', chapter: 8, drops: ['time_sand', 'star_dust'], favoredRole: 'merchant', power: 230 },
 ];
 
 export const LOC_BY_ID = Object.fromEntries(LOCATIONS.map((l) => [l.id, l])) as Record<LocationId, LocationDef>;

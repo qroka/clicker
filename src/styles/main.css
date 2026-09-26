@@ -76,9 +76,22 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
-#app {
+/* Сцена на всю высоту экрана. На iOS в режиме «с экрана Домой» высота окна бывает
+   короче экрана на высоту статус-бара, поэтому высоту задаёт JS через --app-h. */
+.stage {
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--app-h, 100dvh);
+  overflow: hidden;
+}
+
+#app {
+  position: absolute;
   inset: 0;
+  left: 0;
+  right: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -88,7 +101,7 @@ h3 {
 
 /* ─── Фон: ночь в лавке ─── */
 .backdrop {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: -1;
   background:
@@ -136,7 +149,9 @@ h3 {
   font-size: clamp(22px, 6.6vw, 28px);
   font-weight: 800;
   color: var(--gold);
-  text-shadow: 0 0 18px rgba(255, 190, 80, 0.45);
+  text-shadow:
+    0 1px 0 rgba(90, 45, 0, 0.6),
+    0 0 8px rgba(255, 190, 80, 0.18);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -236,7 +251,7 @@ h3 {
   overflow-y: auto;
   overflow-x: hidden;
   -webkit-overflow-scrolling: touch;
-  padding: 4px 14px calc(var(--tab-h) + var(--sab) + 18px);
+  padding: 4px 14px calc(var(--tab-h) + var(--sab) + 8px);
   scrollbar-width: none;
   -webkit-mask-image: linear-gradient(#000 calc(100% - var(--tab-h) - var(--sab) - 28px), transparent calc(100% - var(--tab-h) - var(--sab) - 4px));
   mask-image: linear-gradient(#000 calc(100% - var(--tab-h) - var(--sab) - 28px), transparent calc(100% - var(--tab-h) - var(--sab) - 4px));
@@ -250,7 +265,7 @@ h3 {
 }
 .main.no-scroll {
   overflow: hidden;
-  padding-bottom: calc(var(--tab-h) + var(--sab) + 18px);
+  padding-bottom: calc(var(--tab-h) + var(--sab) + 4px);
   display: flex;
   flex-direction: column;
 }
@@ -260,7 +275,7 @@ h3 {
   position: absolute;
   left: 10px;
   right: 10px;
-  bottom: calc(var(--sab) + 8px);
+  bottom: max(10px, calc(var(--sab) - 6px));
   height: var(--tab-h);
   display: flex;
   border-radius: 22px;
@@ -536,7 +551,8 @@ h3 {
 }
 .cauldron-btn {
   position: relative;
-  width: min(78vw, 330px);
+  margin-top: -6%;
+  width: min(80vw, 340px);
   aspect-ratio: 1;
   display: grid;
   place-items: center;
@@ -563,10 +579,16 @@ h3 {
     transform: translate(1.5px, -1px) rotate(0.6deg);
   }
 }
-.heat-ring {
+.cauldron-btn .heat-ring {
   position: absolute;
-  inset: -4%;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   pointer-events: none;
+  filter: none;
+  animation: none !important;
+  transform: none !important;
 }
 .halo {
   position: absolute;
@@ -723,7 +745,7 @@ h3 {
 
 /* Всплывающие числа */
 .float-layer {
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 40;
@@ -771,7 +793,7 @@ h3 {
   }
 }
 .fx-canvas {
-  position: fixed;
+  position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
@@ -1246,7 +1268,7 @@ h3 {
 
 /* ─── Шторки и модалки ─── */
 .scrim {
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 50;
   background: rgba(8, 4, 14, 0.6);
@@ -1260,7 +1282,7 @@ h3 {
   }
 }
 .sheet {
-  position: fixed;
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
@@ -1305,7 +1327,7 @@ h3 {
 }
 
 .modal {
-  position: fixed;
+  position: absolute;
   left: 16px;
   right: 16px;
   top: 50%;
@@ -1359,7 +1381,7 @@ h3 {
 
 /* Диалог */
 .dialogue {
-  position: fixed;
+  position: absolute;
   left: 0;
   right: 0;
   bottom: 0;
@@ -1379,8 +1401,11 @@ h3 {
 }
 .dialogue::before {
   content: '';
-  position: fixed;
-  inset: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--app-h, 100dvh);
   z-index: -1;
   background: linear-gradient(transparent 35%, rgba(8, 4, 14, 0.8));
   pointer-events: none;
@@ -1437,8 +1462,8 @@ h3 {
 
 /* Тосты */
 .toasts {
-  position: fixed;
-  bottom: calc(var(--sab) + var(--tab-h) + 18px);
+  position: absolute;
+  bottom: calc(var(--sab) + var(--tab-h) + 8px);
   left: 12px;
   right: 12px;
   z-index: 70;

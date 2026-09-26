@@ -6,11 +6,12 @@ import { LOC_BY_ID } from '../../data/world';
 import { TEXTS } from '../../data/texts';
 import { fmt, fmtTime } from '../format';
 import type { HeroDef } from '../../core/types';
+import { Ic, Px } from '../Px';
 
-export function Portrait({ h, locked, busy, size }: { h: HeroDef; locked?: boolean; busy?: boolean; size?: 'lg' }) {
+export function Portrait({ h, locked, busy, size }: { h: HeroDef; locked?: boolean; busy?: boolean; size?: 'lg' | 'sm' }) {
   return (
     <div class={`portrait ${size ?? ''} ${locked ? 'locked' : ''} ${busy ? 'busy' : ''}`} style={{ '--c': h.color }}>
-      {locked ? '❔' : h.emoji}
+      <Px id={locked ? 'question' : h.id} scale={locked ? 2 : size === 'lg' ? 4 : size === 'sm' ? 1 : 2} />
     </div>
   );
 }
@@ -29,7 +30,7 @@ function Heroes() {
   return (
     <>
       <div class="card row" style={{ marginBottom: 10 }}>
-        <div style={{ fontSize: 30 }}>🏰</div>
+        <Px id="castle" scale={2} />
         <div class="grow">
           <b>Слава гильдии: +{Math.round(recruited * E.BAL.heroBonusPerRecruit * 100)}% к доходу</b>
           <div class="small muted">
@@ -46,7 +47,7 @@ function Heroes() {
           const canRec = E.canRecruit(s, h);
           return (
             <button key={h.id} class="hero-card" onClick={() => st.openSheet({ hero: h.id })}>
-              {(canUp || canRec) && <span class="can-up">{canRec ? '!' : '↑'}</span>}
+              {(canUp || canRec) && <span class="can-up">{canRec ? '!' : '+'}</span>}
               <Portrait h={h} locked={!unlocked} busy={busy.has(h.id)} />
               <div class="hn">{unlocked ? h.name : '???'}</div>
               {rec ? (
@@ -54,11 +55,11 @@ function Heroes() {
               ) : unlocked ? (
                 h.recruit === 'gold' ? (
                   <span class="hl" style={{ color: s.gold >= E.heroGoldCost(h) ? 'var(--green)' : 'var(--dim)' }}>
-                    🪙 {fmt(E.heroGoldCost(h))}
+                    <Ic id="coin" /> {fmt(E.heroGoldCost(h))}
                   </span>
                 ) : (
                   <span class="hl" style={{ color: 'var(--violet)' }}>
-                    📜 {hs?.shards ?? 0}/{E.BAL.heroShardsNeeded[h.rarity]}
+                    <Ic id="shard" /> {hs?.shards ?? 0}/{E.BAL.heroShardsNeeded[h.rarity]}
                   </span>
                 )
               ) : (
@@ -92,10 +93,16 @@ function Expeditions() {
         const prog = Math.min(1, (now - e.start) / (e.end - e.start));
         return (
           <div key={e.uid} class={`exp-slot ${ready ? 'ready' : ''}`}>
-            <div class="loc-icon">{loc.emoji}</div>
+            <div class="loc-icon">
+              <Px id={loc.id} scale={2} />
+            </div>
             <div class="grow">
               <b>{TEXTS.locations[e.location].name}</b>
-              <div class="mini-team">{e.heroes.map((id) => E.HERO_BY_ID[id]?.emoji)}</div>
+              <div class="mini-team">
+                {e.heroes.map((id) => (
+                  <Px key={id} id={id} scale={1} />
+                ))}
+              </div>
               {!ready && (
                 <div class="bar teal" style={{ marginTop: 5 }}>
                   <i style={{ width: `${prog * 100}%` }} />
@@ -108,19 +115,19 @@ function Expeditions() {
               </button>
             ) : (
               <span class="small num" style={{ fontWeight: 800 }}>
-                ⏳ {fmtTime(left)}
+                <Ic id="hourglass" /> {fmtTime(left)}
               </span>
             )}
           </div>
         );
       })}
       {Array.from({ length: Math.max(0, slots - s.expeditions.length) }).map((_, i) => (
-        <button key={i} class="exp-slot empty" onClick={() => (anyHero ? st.openSheet({ expedition: true }) : st.toast({ emoji: '🛡️', title: 'Нужен герой', text: 'Сначала найми героя в гильдию', kind: 'info' }))}>
+        <button key={i} class="exp-slot empty" onClick={() => (anyHero ? st.openSheet({ expedition: true }) : st.toast({ icon: 'shield', title: 'Нужен герой', text: 'Сначала найми героя в гильдию', kind: 'info' }))}>
           ＋ Отправить экспедицию
         </button>
       ))}
       <div class="card small muted" style={{ marginTop: 6 }}>
-        🧭 Экспедиции приносят ингредиенты для рецептов, эссенцию для героев и осколки контрактов легендарных гостей. Длинные вылазки выгоднее — отправляй их перед сном.
+        <Ic id="compass" /> Экспедиции приносят ингредиенты для рецептов, эссенцию для героев и осколки контрактов легендарных гостей. Длинные вылазки выгоднее — отправляй их перед сном.
       </div>
     </div>
   );

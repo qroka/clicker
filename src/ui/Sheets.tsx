@@ -12,6 +12,7 @@ import { RARITY_LABEL, ROLE_LABEL, bonusText } from './labels';
 import { Portrait } from './tabs/Guild';
 import { burst } from './fx';
 import type { LocationId } from '../core/types';
+import { Ic, Px } from './Px';
 
 function Sheet({ title, children, onClose }: { title: string; children: ComponentChildren; onClose: () => void }) {
   return (
@@ -22,7 +23,7 @@ function Sheet({ title, children, onClose }: { title: string; children: Componen
         <div class="sheet-head">
           <h2>{title}</h2>
           <button class="icon-btn" onClick={onClose} aria-label="Закрыть">
-            ✕
+            <Px id="close" scale={2} />
           </button>
         </div>
         <div class="sheet-body">{children}</div>
@@ -45,7 +46,9 @@ function Daily() {
   return (
     <div class="stack">
       <div class="event-banner">
-        <span class="ee">{wd.emoji}</span>
+        <span class="ee">
+          <Px id={wd.icon} scale={3} />
+        </span>
         <div>
           <b>Сегодня: {wd.name}</b>
           <div class="small muted">{wd.desc}</div>
@@ -54,13 +57,17 @@ function Daily() {
 
       <div class="section-title" style={{ marginTop: 8 }}>
         <h2>Награда за вход</h2>
-        <small>серия: {s.daily.streak} 🔥</small>
+        <small>
+          серия: {s.daily.streak} <Ic id="fire" />
+        </small>
       </div>
       <div class="calendar">
         {LOGIN_REWARDS.map((r, i) => (
           <div key={i} class={`cal-day ${i < idx || (i === idx && !canLogin) ? 'done' : ''} ${i === idx && canLogin ? 'today' : ''} ${i === 6 ? 'big' : ''}`}>
             <span>{i + 1}</span>
-            <span class="ce">{r.emoji}</span>
+            <span class="ce">
+              <Px id={r.icon} scale={2} />
+            </span>
           </div>
         ))}
       </div>
@@ -69,7 +76,7 @@ function Daily() {
         onClick={(e) => {
           if (st.do((s, m, n, r) => E.claimLogin(s, m, n, r))) {
             burst(e.clientX, e.clientY, { n: 40, kind: 'coin', speed: 8 });
-            st.toast({ emoji: LOGIN_REWARDS[idx].emoji, title: 'Награда получена!', text: LOGIN_REWARDS[idx].label, kind: 'gold' });
+            st.toast({ icon: LOGIN_REWARDS[idx].icon, title: 'Награда получена!', text: LOGIN_REWARDS[idx].label, kind: 'gold' });
           }
         }}
       >
@@ -79,14 +86,16 @@ function Daily() {
 
       <div class="section-title">
         <h2>Задания дня</h2>
-        <small>+{QUEST_REWARD.essence} 💧 и осколок за каждое</small>
+        <small>
+          +{QUEST_REWARD.essence} <Ic id="essence" /> и осколок за каждое
+        </small>
       </div>
       {s.daily.quests.map((q, i) => {
         const t = QUEST_TEMPLATES.find((x) => x.kind === q.kind)!;
         const done = q.progress >= q.target;
         return (
           <div key={i} class={`quest ${done ? 'done' : ''} ${q.claimed ? 'claimed' : ''}`}>
-            <span style={{ fontSize: 26 }}>{t.emoji}</span>
+            <Px id={t.icon} scale={2} />
             <div class="grow">
               <b style={{ fontSize: 14 }}>{t.text(fmt(q.target))}</b>
               <div class="bar teal" style={{ marginTop: 5 }}>
@@ -97,7 +106,7 @@ function Daily() {
               </div>
             </div>
             {q.claimed ? (
-              <span>✅</span>
+              <Px id="check" scale={2} />
             ) : done ? (
               <button class="btn teal" onClick={(e) => st.do((s, _m, _n, r) => E.claimQuest(s, i, r)) && burst(e.clientX, e.clientY, { n: 20, kind: 'star', colors: ['#5ee6c4', '#fff'] })}>
                 Забрать
@@ -105,7 +114,7 @@ function Daily() {
             ) : (
               !s.daily.rerollUsed && (
                 <button class="btn ghost" title="Заменить задание (1 раз в день)" onClick={() => st.do((s, m, n, r) => E.rerollQuest(s, m, i, n, r))}>
-                  🎲
+                  <Px id="dice" scale={2} />
                 </button>
               )
             )}
@@ -116,10 +125,11 @@ function Daily() {
         class={`btn violet block ${E.canClaimAllBonus(s) ? '' : 'disabled'}`}
         onClick={() => {
           const got = st.do((s, _m, _n, r) => E.claimAllBonus(s, r));
-          if (got) st.toast({ emoji: '🎁', title: 'Бонус за все задания!', text: `+${QUESTS_ALL_BONUS.essence} 💧 и ингредиенты`, kind: 'gold' });
+          if (got) st.toast({ icon: 'gift', title: 'Бонус за все задания!', text: `+${QUESTS_ALL_BONUS.essence} эссенции и ингредиенты`, kind: 'gold' });
         }}
       >
-        {s.daily.allBonusClaimed ? '✅ Бонус дня получен' : `🎁 Все 3 задания: +${QUESTS_ALL_BONUS.essence} 💧 и ${QUESTS_ALL_BONUS.ingredients} ингредиента`}
+        <Ic id={s.daily.allBonusClaimed ? 'check' : 'gift'} />{' '}
+        {s.daily.allBonusClaimed ? 'Бонус дня получен' : `Все 3 задания: +${QUESTS_ALL_BONUS.essence} эссенции и ${QUESTS_ALL_BONUS.ingredients} ингредиента`}
       </button>
     </div>
   );
@@ -156,13 +166,13 @@ function HeroView({ id }: { id: string }) {
       <div class="row" style={{ justifyContent: 'center', gap: 6, margin: '8px 0' }}>
         <span class={`rarity ${h.rarity}`}>{RARITY_LABEL[h.rarity]}</span>
         <span class="chip" style={{ fontSize: 11 }}>
-          {role.emoji} {role.name}
+          <Ic id={role.icon} /> {role.name}
         </span>
         {rec && <span class="chip" style={{ fontSize: 11 }}>Ур. {lv}</span>}
       </div>
-      <div class="small dim" style={{ fontStyle: 'italic' }}>Гость из мира: {h.realm}</div>
+      <div class="small dim" >Гость из мира: {h.realm}</div>
       <p class="small" style={{ textAlign: 'left' }}>{h.bio}</p>
-      <div class="card" style={{ fontStyle: 'italic', margin: '8px 0' }}>«{h.quote}»</div>
+      <div class="card" style={{ margin: '8px 0' }}>«{h.quote}»</div>
       <div class="card" style={{ margin: '10px 0', textAlign: 'left' }}>
         <div class="small muted">Бонус</div>
         <b style={{ color: 'var(--teal)' }}>{bonusText(h.bonus.type, E.heroBonusValue(h, Math.max(1, lv)), h.bonus.target)}</b>
@@ -180,12 +190,20 @@ function HeroView({ id }: { id: string }) {
           <div class="btn block disabled">Максимальный уровень</div>
         ) : (
           <button class={`btn teal block big ${s.essence >= cost ? '' : 'disabled'}`} onClick={(e) => st.levelHero(id) && burst(e.clientX, e.clientY, { n: 20, kind: 'star', colors: ['#5ee6c4', '#fff'] })}>
-            {s.essence >= cost ? `⬆️ Повысить уровень · 💧 ${fmt(cost)}` : `Нужно ещё 💧 ${fmt(cost - s.essence)}`}
+            {s.essence >= cost ? (
+              <>
+                <Ic id="arrow_up" /> Повысить уровень · <Ic id="essence" /> {fmt(cost)}
+              </>
+            ) : (
+              <>
+                Нужно ещё <Ic id="essence" /> {fmt(cost - s.essence)}
+              </>
+            )}
           </button>
         )
       ) : h.recruit === 'gold' ? (
         <button class={`btn block big ${E.canRecruit(s, h) ? '' : 'disabled'}`} onClick={(e) => st.recruit(id) && burst(e.clientX, e.clientY, { n: 50, kind: 'star', speed: 8 })}>
-          🤝 Нанять · 🪙 {fmt(E.heroGoldCost(h))}
+          <Ic id="contract" /> Нанять · <Ic id="coin" /> {fmt(E.heroGoldCost(h))}
         </button>
       ) : (
         <>
@@ -193,7 +211,7 @@ function HeroView({ id }: { id: string }) {
             <i style={{ width: `${Math.min(1, (hs?.shards ?? 0) / E.BAL.heroShardsNeeded[h.rarity]) * 100}%` }} />
           </div>
           <button class={`btn violet block big ${E.canRecruit(s, h) ? '' : 'disabled'}`} onClick={(e) => st.recruit(id) && burst(e.clientX, e.clientY, { n: 60, kind: 'star', speed: 9 })}>
-            📜 Контракт: {hs?.shards ?? 0}/{E.BAL.heroShardsNeeded[h.rarity]} осколков
+            <Ic id="shard" /> Контракт: {hs?.shards ?? 0}/{E.BAL.heroShardsNeeded[h.rarity]} осколков
           </button>
           <div class="small muted" style={{ marginTop: 6 }}>
             Осколки выпадают в средних и долгих экспедициях, за задания дня и награды за вход.
@@ -230,10 +248,14 @@ function ExpeditionPlanner({ onDone }: { onDone: () => void }) {
           const avail = l.chapter <= s.chapter;
           return (
             <button key={l.id} class={`pick ${loc === l.id ? 'on' : ''} ${avail ? '' : 'off'}`} onClick={() => avail && setLoc(l.id)}>
-              <span style={{ fontSize: 26 }}>{avail ? l.emoji : '🔒'}</span>
+              <Px id={avail ? l.id : 'lock'} scale={2} />
               <div class="grow">
                 <b style={{ fontSize: 13 }}>{avail ? TEXTS.locations[l.id].name : `Глава ${l.chapter}`}</b>
-                <div class="small">{avail ? `${ING_BY_ID[l.drops[0]].emoji} ${ING_BY_ID[l.drops[1]].emoji} · ${ROLE_LABEL[l.favoredRole].emoji}` : ''}</div>
+                {avail && (
+                  <div class="small">
+                    <Ic id={ING_BY_ID[l.drops[0]].id} /> <Ic id={ING_BY_ID[l.drops[1]].id} /> · <Ic id={ROLE_LABEL[l.favoredRole].icon} />
+                  </div>
+                )}
               </div>
             </button>
           );
@@ -241,7 +263,7 @@ function ExpeditionPlanner({ onDone }: { onDone: () => void }) {
       </div>
       <div class="small muted">{TEXTS.locations[loc].desc}</div>
       <div class="small">
-        Любит: {ROLE_LABEL[L.favoredRole].emoji} {ROLE_LABEL[L.favoredRole].name} (сила ×1,5) · нужная сила: {L.power}
+        Любит: <Ic id={ROLE_LABEL[L.favoredRole].icon} /> {ROLE_LABEL[L.favoredRole].name} (сила ×1,5) · нужная сила: {L.power}
       </div>
 
       <div class="seg">
@@ -252,7 +274,7 @@ function ExpeditionPlanner({ onDone }: { onDone: () => void }) {
         ))}
       </div>
       <div class="small muted">
-        Добыча ≈ {Math.round(d.loot * 1.5 * m.expLoot)} ингредиентов, 💧 {Math.round(d.essence * (1 + L.chapter * 0.25) * m.essence)}
+        Добыча ≈ {Math.round(d.loot * 1.5 * m.expLoot)} ингредиентов, <Ic id="essence" /> {Math.round(d.essence * (1 + L.chapter * 0.25) * m.essence)}
         {dur !== 'short' ? ', шанс осколков контракта' : ''}
       </div>
 
@@ -260,11 +282,11 @@ function ExpeditionPlanner({ onDone }: { onDone: () => void }) {
       <div class="pick-grid">
         {free.map((h) => (
           <button key={h.id} class={`pick ${team.includes(h.id) ? 'on' : ''}`} onClick={() => toggle(h.id)}>
-            <span style={{ fontSize: 24 }}>{h.emoji}</span>
+            <Px id={h.id} scale={1} />
             <div class="grow">
               <b style={{ fontSize: 12.5 }}>{h.name}</b>
               <div class="small muted">
-                {ROLE_LABEL[h.role].emoji} сила {fmt(E.heroPower(s, h.id, loc), 1)}
+                <Ic id={ROLE_LABEL[h.role].icon} /> сила {fmt(E.heroPower(s, h.id, loc), 1)}
               </div>
             </div>
           </button>
@@ -283,7 +305,7 @@ function ExpeditionPlanner({ onDone }: { onDone: () => void }) {
             if (team.length && st.startExpedition(loc, dur, team)) onDone();
           }}
         >
-          🧭 В путь!
+          <Ic id="compass" /> В путь!
         </button>
       </div>
       <div class="small muted">При неудаче отряд вернётся с частью эссенции, но без ингредиентов.</div>
@@ -309,15 +331,15 @@ function Settings() {
     return (
       <div>
         <button class="btn ghost" onClick={() => setView('main')}>
-          ← Назад
+          <Ic id="arrow_left" /> Назад
         </button>
         <p class="muted small">
           Открыто {s.achievements.length}/{ACHIEVEMENTS.length} · каждое даёт +1% ко всему доходу
         </p>
         <div class="ach-grid">
           {ACHIEVEMENTS.map((a) => (
-            <button key={a.id} class={`ach ${have.has(a.id) ? '' : 'off'}`} onClick={() => st.toast({ emoji: a.emoji, title: a.name, text: a.desc, kind: have.has(a.id) ? 'ach' : 'info' })}>
-              {a.emoji}
+            <button key={a.id} class={`ach ${have.has(a.id) ? '' : 'off'}`} onClick={() => st.toast({ icon: a.icon, title: a.name, text: a.desc, kind: have.has(a.id) ? 'ach' : 'info' })}>
+              <Px id={a.icon} scale={2} />
             </button>
           ))}
         </div>
@@ -328,7 +350,7 @@ function Settings() {
     return (
       <div class="stack">
         <button class="btn ghost" onClick={() => setView('main')}>
-          ← Назад
+          <Ic id="arrow_left" /> Назад
         </button>
         <p class="small muted">Скопируй код, чтобы перенести прогресс на другое устройство или сделать резервную копию.</p>
         <textarea class="code" readOnly value={st.exportSave()} onFocus={(e) => (e.currentTarget as HTMLTextAreaElement).select()} />
@@ -336,17 +358,17 @@ function Settings() {
           class="btn ghost"
           onClick={() => {
             void navigator.clipboard?.writeText(st.exportSave());
-            st.toast({ emoji: '📋', title: 'Скопировано', kind: 'info' });
+            st.toast({ icon: 'copy', title: 'Скопировано', kind: 'info' });
           }}
         >
-          📋 Копировать
+          <Ic id="copy" /> Копировать
         </button>
         <p class="small muted">Загрузить сохранение:</p>
         <textarea class="code" value={code} onInput={(e) => setCode((e.currentTarget as HTMLTextAreaElement).value)} placeholder="Вставь код сюда" />
         <button
           class="btn"
           onClick={() =>
-            st.importSave(code) ? st.toast({ emoji: '✅', title: 'Прогресс загружен', kind: 'info' }) : st.toast({ emoji: '⚠️', title: 'Неверный код', kind: 'warn' })
+            st.importSave(code) ? st.toast({ icon: 'check', title: 'Прогресс загружен', kind: 'info' }) : st.toast({ icon: 'warning', title: 'Неверный код', kind: 'warn' })
           }
         >
           Загрузить
@@ -376,15 +398,21 @@ function Settings() {
   return (
     <div>
       <div class="list-row" style={{ alignItems: 'center' }}>
-        <span>🔊 Звук</span>
+        <span>
+          <Ic id="sound" /> Звук
+        </span>
         <Toggle on={s.settings.sound} onClick={() => set('sound')} />
       </div>
       <div class="list-row" style={{ alignItems: 'center' }}>
-        <span>📳 Вибрация</span>
+        <span>
+          <Ic id="vibrate" /> Вибрация
+        </span>
         <Toggle on={s.settings.haptics} onClick={() => set('haptics')} />
       </div>
       <div class="list-row" style={{ alignItems: 'center' }}>
-        <span>🔢 Числа</span>
+        <span>
+          <Ic id="numbers" /> Числа
+        </span>
         <div class="seg" style={{ width: 170 }}>
           {(['short', 'sci'] as const).map((n) => (
             <button
@@ -403,14 +431,14 @@ function Settings() {
       </div>
       <div class="row" style={{ margin: '14px 0', gap: 8 }}>
         <button class="btn ghost grow" onClick={() => setView('ach')}>
-          🏆 {s.achievements.length}/{ACHIEVEMENTS.length}
+          <Ic id="trophy" /> {s.achievements.length}/{ACHIEVEMENTS.length}
         </button>
         <button class="btn ghost grow" onClick={() => setView('save')}>
-          💾 Сохранение
+          <Ic id="save" /> Сохранение
         </button>
       </div>
       <button class="btn ghost block" onClick={() => st.modals.push({ type: 'dialogue', title: 'Пролог', lines: TEXTS.prologue }) && st.bump()}>
-        📜 Перечитать историю
+        <Ic id="scroll" /> Перечитать историю
       </button>
       <div class="section-title">
         <h2>Статистика</h2>
@@ -422,7 +450,7 @@ function Settings() {
         </div>
       ))}
       <div class="small muted" style={{ margin: '16px 0 8px' }}>
-        💡 Совет: в Safari нажми «Поделиться» → «На экран Домой», чтобы играть как в приложении, на весь экран и офлайн.
+        <Ic id="bulb" /> Совет: в Safari нажми «Поделиться» → «На экран Домой», чтобы играть как в приложении, на весь экран и офлайн.
       </div>
       <button
         class="btn ghost block"
@@ -435,7 +463,7 @@ function Settings() {
           }
         }}
       >
-        {['🗑 Начать заново', '⚠️ Весь прогресс будет удалён!', '‼️ Нажми ещё раз для подтверждения'][resetConfirm]}
+        <Ic id={resetConfirm ? 'warning' : 'trash'} /> {['Начать заново', 'Весь прогресс будет удалён!', 'Нажми ещё раз для подтверждения'][resetConfirm]}
       </button>
     </div>
   );

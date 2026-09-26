@@ -1,0 +1,965 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   ПИКСЕЛЬНАЯ ТЕМА. Переопределяет базовые стили: сплошные цвета, ступенчатые
+   углы, рамки 2px, жёсткие тени, пиксельный шрифт. Никаких размытий.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --bg0: #181425;
+  --bg1: #221a36;
+  --bg2: #2e2248;
+  --card: #2a2040;
+  --card-hi: #372a54;
+  --line: #4b3a6e;
+  --line-hi: #7d63b0;
+  --outline: #0f0b18;
+  --text: #f4eeff;
+  --muted: #b9abd8;
+  --dim: #7c6e9c;
+  --gold: #fee761;
+  --gold2: #feae34;
+  --gold3: #f77622;
+  --teal: #63c74d;
+  --violet: #b98cff;
+  --rose: #f6757a;
+  --green: #63c74d;
+  --red: #e43b44;
+  --r-common: #8b9bb4;
+  --r-rare: #0099db;
+  --r-epic: #b55088;
+  --r-legendary: #feae34;
+  --radius: 0px;
+  --font-ui: 'Tiny5', ui-rounded, system-ui, sans-serif;
+  --font-title: 'Press Start 2P', 'Tiny5', monospace;
+  /* Ступенчатые «пиксельные» углы */
+  --notch: polygon(0 4px, 2px 4px, 2px 2px, 4px 2px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 2px, calc(100% - 2px) 2px, calc(100% - 2px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 2px) calc(100% - 4px), calc(100% - 2px) calc(100% - 2px), calc(100% - 4px) calc(100% - 2px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 2px), 2px calc(100% - 2px), 2px calc(100% - 4px), 0 calc(100% - 4px));
+}
+
+html,
+body {
+  font-size: 16px;
+  letter-spacing: 0.01em;
+}
+
+img.px {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: inline-block;
+  flex: none;
+}
+img.px.ic,
+.px-missing.ic {
+  vertical-align: -3px;
+  margin: 0 1px;
+}
+.px-missing {
+  display: inline-grid;
+  place-items: center;
+  background: var(--card-hi);
+  color: var(--dim);
+  font-size: 10px;
+}
+
+h1,
+h2,
+h3 {
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* Все «карточные» элементы: без скруглений, ступенчатые углы, рамка 2px */
+.card,
+.gen,
+.upg,
+.hero-card,
+.exp-slot,
+.pick,
+.recipe,
+.quest,
+.challenge,
+.talent,
+.chip,
+.buff,
+.seg,
+.seg button,
+.btn,
+.icon-btn,
+.chapter-strip,
+.event-banner,
+.toast,
+.tabbar,
+.modal,
+.ing,
+.brew-slot,
+.cal-day,
+.ach,
+.bubble,
+.dialogue .dbox,
+.dialogue .dspeaker,
+.sheet,
+.gen-icon,
+.loc-icon,
+.flask,
+textarea.code,
+.toggle,
+.toggle::after,
+.badge,
+.can-up,
+.rarity,
+.gen-icon .owned,
+.stone-hero,
+.list-row {
+  border-radius: 0 !important;
+}
+.card,
+.gen,
+.upg,
+.hero-card,
+.exp-slot,
+.pick,
+.recipe,
+.quest,
+.challenge,
+.talent,
+.chip,
+.buff,
+.seg,
+.btn,
+.icon-btn,
+.chapter-strip,
+.event-banner,
+.toast,
+.tabbar,
+.modal,
+.ing,
+.cal-day,
+.ach,
+.bubble,
+.dialogue .dbox,
+.gen-icon,
+.loc-icon,
+textarea.code {
+  clip-path: var(--notch);
+}
+
+.card,
+.gen,
+.upg,
+.hero-card,
+.exp-slot,
+.pick,
+.recipe,
+.quest,
+.challenge,
+.talent,
+.chapter-strip,
+.cal-day,
+.ach,
+.ing {
+  background: var(--card);
+  border: 2px solid var(--line);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.06), inset 0 -3px 0 rgba(0, 0, 0, 0.25);
+}
+
+/* ─── Фон: ночное небо полосами + пиксельные звёзды ─── */
+.backdrop {
+  background: linear-gradient(
+    180deg,
+    #120d1f 0%,
+    #120d1f 18%,
+    #181229 18%,
+    #181229 38%,
+    #1e1632 38%,
+    #1e1632 60%,
+    #241a3b 60%,
+    #241a3b 80%,
+    color-mix(in srgb, var(--potion) 12%, #241a3b) 80%
+  );
+}
+.backdrop::after {
+  background-image: none;
+  width: 2px;
+  height: 2px;
+  inset: auto;
+  top: 0;
+  left: 0;
+  background: #fff;
+  box-shadow:
+    40px 60px #fff,
+    120px 140px #c0cbdc,
+    210px 40px #fee761,
+    300px 110px #fff,
+    350px 30px #c0cbdc,
+    70px 220px #8b9bb4,
+    260px 250px #fff,
+    380px 200px #8b9bb4,
+    20px 330px #c0cbdc,
+    180px 300px #8b9bb4,
+    330px 380px #fff,
+    90px 430px #8b9bb4,
+    240px 470px #c0cbdc,
+    150px 80px #8b9bb4,
+    390px 300px #fee761;
+  animation: twinkle 2.4s steps(2) infinite alternate;
+}
+
+/* ─── Шапка ─── */
+.topbar {
+  background: none;
+}
+.gold-amount {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: clamp(24px, 7vw, 30px);
+  color: var(--gold);
+  text-shadow:
+    2px 2px 0 #9a4a0f,
+    -1px -1px 0 #3a1b06;
+  letter-spacing: 0.02em;
+}
+.gold-amount .coin {
+  width: 32px;
+  height: 32px;
+}
+.gps {
+  font-size: 13px;
+}
+.chip {
+  background: var(--card);
+  border: 2px solid var(--line);
+  font-weight: 600;
+}
+.icon-btn {
+  background: var(--card-hi);
+  border: 2px solid var(--line-hi);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.12), inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+}
+.icon-btn:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 3px 0 rgba(0, 0, 0, 0.35);
+}
+.badge {
+  background: var(--red);
+  border: 2px solid var(--outline);
+  box-shadow: none;
+  font-family: var(--font-title);
+  animation: pulse 1.2s steps(2) infinite;
+}
+.dot-badge {
+  border-radius: 0;
+  background: var(--red);
+  box-shadow: 0 0 0 2px var(--outline);
+}
+
+/* ─── Кнопки ─── */
+.btn {
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #3a1b06;
+  background: var(--gold2);
+  border: 2px solid var(--outline);
+  box-shadow:
+    inset 0 3px 0 var(--gold),
+    inset 0 -4px 0 #c45a12;
+  padding: 10px 14px 12px;
+}
+.btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    inset 0 3px 0 #c45a12,
+    inset 0 -1px 0 var(--gold);
+}
+.btn.teal {
+  color: #0d2a10;
+  background: #63c74d;
+  box-shadow:
+    inset 0 3px 0 #a6ec8f,
+    inset 0 -4px 0 #3e8948;
+}
+.btn.violet {
+  color: #fff;
+  background: #8a5cd6;
+  box-shadow:
+    inset 0 3px 0 #b98cff,
+    inset 0 -4px 0 #5a3a9a;
+}
+.btn.ghost {
+  color: var(--text);
+  background: var(--card-hi);
+  border: 2px solid var(--line-hi);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+}
+.btn.disabled,
+.btn:disabled {
+  color: var(--dim);
+  background: var(--bg2);
+  border-color: var(--line);
+  box-shadow: none;
+}
+.seg {
+  background: var(--bg0);
+  border: 2px solid var(--line);
+}
+.seg button {
+  font-family: var(--font-title);
+  font-weight: 600;
+}
+.seg button.on {
+  background: var(--line);
+  color: var(--gold);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.3);
+}
+
+/* Полоски прогресса — сегментами */
+.bar {
+  height: 10px;
+  border-radius: 0;
+  background: var(--outline);
+  border: 2px solid var(--outline);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.bar > i {
+  border-radius: 0;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(0, 0, 0, 0.35) 6px 8px),
+    linear-gradient(180deg, var(--gold) 0 50%, var(--gold2) 50%);
+  transition: width 0.3s steps(6);
+}
+.bar.teal > i {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(0, 0, 0, 0.35) 6px 8px),
+    linear-gradient(180deg, #a6ec8f 0 50%, #63c74d 50%);
+}
+.bar.violet > i {
+  background:
+    repeating-linear-gradient(90deg, transparent 0 6px, rgba(0, 0, 0, 0.35) 6px 8px),
+    linear-gradient(180deg, #b98cff 0 50%, #8a5cd6 50%);
+}
+.gen .bar {
+  height: 8px;
+}
+
+/* ─── Таббар ─── */
+.tabbar {
+  background: var(--bg1);
+  border: 2px solid var(--line-hi);
+  box-shadow:
+    inset 0 2px 0 rgba(255, 255, 255, 0.08),
+    inset 0 -4px 0 rgba(0, 0, 0, 0.35);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.tab {
+  font-family: var(--font-title);
+  font-weight: 600;
+  font-size: 11px;
+}
+.tab .ti {
+  filter: grayscale(1) brightness(0.75);
+  transition: none;
+}
+.tab.active .ti {
+  filter: none;
+  transform: translateY(-2px);
+}
+.tab.active::before {
+  inset: 6px 6px;
+  border-radius: 0;
+  background: var(--card-hi);
+  box-shadow: inset 0 -3px 0 var(--gold2);
+  clip-path: var(--notch);
+}
+.main {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+/* ─── Лавка ─── */
+.chapter-strip .ct,
+.section-title h2,
+.sheet-head h2,
+.modal h2,
+.dialogue .dtitle {
+  font-family: var(--font-title);
+  font-weight: 700;
+  color: var(--gold);
+  text-shadow: 2px 2px 0 #3a1b06;
+}
+.section-title h2 {
+  font-size: 22px;
+}
+.buff {
+  background: var(--card);
+  border: 2px solid var(--teal);
+  color: #a6ec8f;
+  font-family: var(--font-title);
+  font-weight: 600;
+}
+.buff.hot {
+  border-color: var(--gold3);
+  color: #ffc07a;
+  background: #3a1f1a;
+}
+.buff.gold {
+  border-color: var(--gold2);
+  color: var(--gold);
+  background: #3a2a14;
+}
+
+.pixel-cauldron {
+  position: relative;
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  margin-top: -4%;
+}
+.pixel-cauldron .pot {
+  position: relative;
+  transition: transform 0.08s steps(2);
+  filter: drop-shadow(0 12px 0 rgba(0, 0, 0, 0.35));
+}
+.pixel-cauldron.squish .pot {
+  transform: scale(1.04, 0.94) translateY(3%);
+}
+.pixel-cauldron.boiling .pot {
+  animation: shake 0.12s steps(2) infinite;
+}
+.pixel-cauldron .fire {
+  margin-top: -6px;
+}
+.pixel-cauldron .glow {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: 70%;
+  aspect-ratio: 2;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--potion) 40%, transparent), transparent);
+  pointer-events: none;
+  animation: breathe 2s steps(4) infinite;
+}
+.boiling .glow {
+  background: radial-gradient(closest-side, rgba(247, 118, 34, 0.55), transparent);
+}
+.pixel-cauldron .pbub {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  background: var(--potion);
+  box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.25);
+  top: 26%;
+  opacity: 0;
+  animation: pbub 1.8s steps(6) infinite;
+  pointer-events: none;
+}
+.boiling .pbub {
+  animation-duration: 0.7s;
+}
+@keyframes pbub {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-70px);
+    opacity: 0;
+  }
+}
+.heat {
+  display: flex;
+  gap: 3px;
+  margin-top: 10px;
+  padding: 3px;
+  background: var(--outline);
+  border: 2px solid var(--line);
+}
+.heat i {
+  width: 14px;
+  height: 10px;
+  background: #2a2040;
+}
+.heat i.on {
+  background: linear-gradient(180deg, #fee761 0 40%, #f77622 40%);
+}
+.boiling .heat i {
+  background: linear-gradient(180deg, #fff 0 40%, #e43b44 40%);
+  animation: pulse 0.3s steps(2) infinite;
+}
+
+.cauldron-zone.crit::after {
+  background: repeating-conic-gradient(from 0deg at 50% 45%, rgba(254, 231, 97, 0.25) 0 8deg, transparent 8deg 20deg);
+}
+
+.cat-body {
+  animation: none;
+  filter: drop-shadow(2px 2px 0 rgba(0, 0, 0, 0.4));
+}
+.cat-body.jump {
+  animation: cat-jump 0.4s steps(4);
+}
+.cat-body.puff {
+  animation: cat-puff 0.4s steps(3);
+}
+.bubble {
+  background: #f4e8c8;
+  color: #2b1b3d;
+  border: 2px solid var(--outline);
+  box-shadow: inset 0 -3px 0 #d9c49a;
+  font-family: var(--font-ui);
+  font-weight: 600;
+  font-size: 14px;
+}
+.tap-hint {
+  font-family: var(--font-title);
+  animation: bob 1s steps(2) infinite;
+}
+.tap-value {
+  font-size: 13px;
+}
+
+.wisp {
+  background: none;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  filter: drop-shadow(0 0 6px rgba(254, 231, 97, 0.9));
+  animation:
+    wisp-float 3.2s steps(16) infinite,
+    wisp-in 0.4s steps(4);
+}
+.wisp::after {
+  border-radius: 0;
+  border: 2px dashed rgba(254, 231, 97, 0.7);
+  inset: -8px;
+  animation: spin 4s steps(8) infinite;
+}
+
+.float-num {
+  font-family: var(--font-title);
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--gold);
+  text-shadow:
+    2px 2px 0 #3a1b06,
+    -2px 0 0 #3a1b06,
+    0 -2px 0 #3a1b06,
+    2px 0 0 #3a1b06;
+  animation: float-up 0.8s steps(8) forwards;
+}
+.float-num.crit {
+  font-size: 28px;
+  color: #ffc07a;
+}
+.float-num.teal {
+  color: #a6ec8f;
+}
+
+/* ─── Мастерская ─── */
+.gen.can {
+  border-color: var(--gold2);
+  background: #2f2440;
+}
+.gen-icon,
+.loc-icon {
+  background: var(--bg0);
+  border: 2px solid var(--line);
+  box-shadow: inset 0 -3px 0 rgba(255, 255, 255, 0.05);
+}
+.gen-icon .owned {
+  background: var(--outline);
+  border: 2px solid var(--gold2);
+  font-family: var(--font-title);
+}
+.gen-name,
+.upg .un {
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+.upg.can {
+  border-color: var(--gold2);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+}
+.upg .ud {
+  color: #a6ec8f;
+}
+
+/* ─── Гильдия: портреты ─── */
+.portrait {
+  border-radius: 0;
+  width: 56px;
+  height: 56px;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--c) 35%, #181425) 0 55%, color-mix(in srgb, var(--c) 20%, #181425) 55%);
+  box-shadow:
+    0 0 0 2px var(--outline),
+    0 0 0 4px var(--c),
+    0 0 0 6px var(--outline);
+  clip-path: none;
+  overflow: hidden;
+  align-items: end;
+  margin: 6px;
+}
+.portrait.lg {
+  width: 104px;
+  height: 104px;
+}
+.portrait.sm {
+  width: 28px;
+  height: 28px;
+  margin: 4px;
+}
+.portrait.locked {
+  filter: grayscale(1) brightness(0.5);
+}
+.portrait.busy::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  top: 2px;
+  right: 2px;
+  background: var(--teal);
+  box-shadow: 0 0 0 2px var(--outline);
+}
+.hero-card .hn {
+  font-family: var(--font-title);
+  font-weight: 700;
+}
+.hero-card .can-up {
+  background: var(--green);
+  border: 2px solid var(--outline);
+  font-family: var(--font-title);
+}
+.rarity {
+  font-family: var(--font-title);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border: 2px solid currentColor;
+  background: var(--bg0) !important;
+}
+.mini-team {
+  gap: 4px;
+}
+.pick.on {
+  border-color: var(--gold2);
+  background: #3a2a14;
+}
+
+/* ─── Лаборатория ─── */
+.ing {
+  background: var(--bg0);
+  border-color: color-mix(in srgb, var(--c) 60%, var(--line));
+}
+.ing .cnt {
+  font-family: var(--font-title);
+  text-shadow: 1px 1px 0 #000;
+}
+.brew-slot {
+  width: 64px;
+  height: 64px;
+  border: 2px dashed var(--line-hi);
+  background: var(--bg0);
+}
+.brew-slot.filled {
+  border-style: solid;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+}
+.flask {
+  background: var(--bg0);
+  box-shadow: none;
+  border: 2px solid var(--line);
+  width: 44px;
+  height: 44px;
+}
+.flask.unknown {
+  font-family: var(--font-title);
+  font-size: 22px;
+  color: var(--dim);
+}
+
+/* ─── Знания ─── */
+.stone-hero {
+  background: var(--card);
+}
+.stone-gem {
+  animation: bob 1.6s steps(2) infinite;
+  filter: drop-shadow(0 0 8px rgba(228, 59, 68, 0.6));
+}
+.talent.can {
+  border-color: var(--violet);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+}
+.talent.maxed {
+  border-color: var(--gold2);
+}
+.talent .tn {
+  font-family: var(--font-title);
+}
+.talent-col .link {
+  width: 4px;
+  background: var(--line-hi);
+}
+.challenge.active {
+  border-color: var(--rose);
+  background: #3a1f2a;
+}
+.pips i {
+  border-radius: 0;
+  width: 10px;
+  height: 10px;
+  background: var(--bg0);
+  box-shadow: 0 0 0 2px var(--line);
+}
+.pips i.on {
+  background: var(--gold2);
+}
+
+/* ─── Шторки, модалки, диалоги ─── */
+.scrim {
+  background: rgba(15, 11, 24, 0.75);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.sheet {
+  background: var(--bg1);
+  border: 2px solid var(--line-hi);
+  border-bottom: 0;
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.06);
+  animation: sheet-up 0.25s steps(5);
+}
+.sheet-grip {
+  border-radius: 0;
+  height: 4px;
+  background: var(--line-hi);
+}
+.modal {
+  background: var(--bg1);
+  border: 2px solid var(--gold2);
+  box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.06), inset 0 -4px 0 rgba(0, 0, 0, 0.3);
+  animation: modal-in 0.25s steps(4);
+}
+.modal .big-emoji {
+  filter: drop-shadow(0 0 10px rgba(254, 231, 97, 0.35));
+  display: grid;
+  place-items: center;
+}
+.rays {
+  animation: spin 16s steps(32) infinite;
+}
+.dialogue .dbox {
+  background: #f4e8c8;
+  border: 2px solid var(--outline);
+  box-shadow:
+    inset 0 -4px 0 #d9c49a,
+    inset 0 3px 0 #fff8e4;
+}
+.dialogue .dspeaker {
+  background: #3a2358;
+  border: 2px solid var(--outline);
+  font-family: var(--font-title);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.35);
+}
+.dialogue .dspeaker span {
+  border-radius: 0;
+  width: 52px;
+  height: 52px;
+  margin: -14px 0 -6px -2px;
+  background: #241a3b;
+  box-shadow:
+    0 0 0 2px var(--outline),
+    0 0 0 4px var(--gold2);
+}
+.dialogue .dtext {
+  font-family: var(--font-ui);
+  font-size: 17px;
+  font-weight: 600;
+}
+.toast {
+  background: var(--bg1);
+  border: 2px solid var(--line-hi);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+  animation:
+    toast-in 0.25s steps(4),
+    toast-out 0.3s steps(3) 2.8s forwards;
+}
+.toast.toast-ach {
+  border-color: var(--gold2);
+}
+.toast b {
+  font-family: var(--font-title);
+}
+.cal-day {
+  font-family: var(--font-title);
+}
+.cal-day.today {
+  border-color: var(--gold2);
+  background: #3a2a14;
+  box-shadow: none;
+}
+.cal-day.done::after {
+  content: '';
+  background: rgba(15, 11, 24, 0.55);
+}
+.event-banner {
+  background: #2a2350;
+  border: 2px solid var(--violet);
+}
+.toggle {
+  background: var(--bg0);
+  border: 2px solid var(--line-hi);
+}
+.toggle::after {
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  background: var(--muted);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.3);
+  transition: transform 0.15s steps(3);
+}
+.toggle.on {
+  background: #3e8948;
+}
+.toggle.on::after {
+  transform: translateX(20px);
+  background: #fff;
+}
+textarea.code {
+  background: var(--bg0);
+  border: 2px solid var(--line);
+  font-family: ui-monospace, monospace;
+}
+.ach.off {
+  opacity: 0.3;
+}
+
+@keyframes shake {
+  50% {
+    transform: translate(2px, -1px);
+  }
+}
+
+/* ─── Шрифты: Press Start 2P — заголовки и счётчик (кратно 8px), Tiny5 — текст ─── */
+html,
+body {
+  font-size: 16px;
+  line-height: 1.3;
+}
+.small,
+.gen-sub,
+.section-title small,
+.gps,
+.tap-value,
+.toast small,
+.dialogue .dnext {
+  font-size: 13px;
+}
+.gold-amount {
+  font-size: 24px;
+  line-height: 1.1;
+}
+.section-title h2,
+.sheet-head h2,
+.modal h2,
+.dialogue .dtitle {
+  font-size: 16px;
+  line-height: 1.3;
+}
+.stone-hero h2 {
+  font-size: 16px !important;
+}
+.chapter-strip .ct,
+.gen-name,
+.upg .un,
+.hero-card .hn,
+.talent .tn,
+.toast b,
+.btn,
+.seg button,
+.tab,
+.buff,
+.cal-day,
+.rarity,
+.badge,
+.gen-icon .owned,
+.dialogue .dspeaker,
+.float-num,
+.can-up,
+.tap-hint,
+.flask.unknown {
+  font-family: var(--font-ui);
+}
+.chapter-strip .ct {
+  font-size: 18px;
+}
+.gen-name {
+  font-size: 17px;
+}
+.btn {
+  font-size: 16px;
+}
+.tab {
+  font-size: 12px;
+}
+.float-num {
+  font-size: 24px;
+}
+.float-num.crit {
+  font-size: 30px;
+}
+.dialogue .dtext {
+  font-size: 18px;
+  line-height: 1.35;
+}
+.bubble {
+  font-size: 15px;
+}
+
+/* Подпись активной вкладки поверх подсветки */
+.tab {
+  isolation: isolate;
+}
+.tab.active::before {
+  z-index: -1;
+}
+/* У пиксельных шрифтов нет курсива — синтетический наклон выглядит плохо */
+[style*='italic'],
+em,
+i:not(.pbub):not(.on) {
+  font-style: normal !important;
+}
+.dim[style],
+.card[style] {
+  font-style: normal !important;
+}
+.tab.active::before {
+  box-shadow: none;
+  inset: 4px 6px 8px;
+}
+.tab.active::after {
+  content: '';
+  position: absolute;
+  left: 30%;
+  right: 30%;
+  bottom: 3px;
+  height: 3px;
+  background: var(--gold2);
+}
+.tab {
+  padding-bottom: 8px;
+}
+.tab.active::after {
+  bottom: 2px;
+}
+.talent-col h3 {
+  font-family: var(--font-ui);
+  font-size: 17px;
+  color: var(--muted);
+  text-shadow: none;
+}

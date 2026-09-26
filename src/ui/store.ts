@@ -20,7 +20,7 @@ export type Modal =
 
 export interface Toast {
   id: number;
-  emoji: string;
+  icon: string;
   title: string;
   text?: string;
   kind?: 'gold' | 'info' | 'ach' | 'warn';
@@ -161,7 +161,7 @@ class Store {
   private dailyCheck(now: number) {
     const returning = this.s.daily.day !== '';
     if (E.rollDaily(this.s, this.mods(), now, rng) && returning) {
-      this.toast({ emoji: '📅', title: 'Новый день!', text: 'Награда за вход и свежие задания ждут', kind: 'info' });
+      this.toast({ icon: 'calendar', title: 'Новый день!', text: 'Награда за вход и свежие задания ждут', kind: 'info' });
     }
   }
 
@@ -175,7 +175,7 @@ class Store {
     }
     for (const id of ev.achievements) {
       const a = ACHIEVEMENTS.find((x) => x.id === id);
-      if (a) this.toast({ emoji: a.emoji, title: a.name, text: 'Достижение! +1% к доходу', kind: 'ach' });
+      if (a) this.toast({ icon: a.icon, title: a.name, text: 'Достижение! +1% к доходу', kind: 'ach' });
     }
     if (ev.challengeDone) {
       sfx.fanfare();
@@ -317,7 +317,7 @@ class Store {
     const ok = E.startChallenge(this.s, id, Date.now());
     if (ok) {
       sfx.fanfare();
-      this.toast({ emoji: CHALLENGE_BY_ID[id].emoji, title: `Испытание: ${CHALLENGE_BY_ID[id].name}`, text: 'Удачи, алхимик!', kind: 'warn' });
+      this.toast({ icon: CHALLENGE_BY_ID[id].icon, title: `Испытание: ${CHALLENGE_BY_ID[id].name}`, text: 'Удачи, алхимик!', kind: 'warn' });
       this.save();
     }
     this.bump();

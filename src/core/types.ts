@@ -72,8 +72,6 @@ export interface HeroDef {
   title: string;
   /** Подсказка, какой мир напоминает (для игрока — «Гость из мира ...»). Без торговых марок. */
   realm: string;
-  /** Эмодзи-аватар (Apple emoji хорошо смотрятся на iOS). */
-  emoji: string;
   /** Основной цвет рамки портрета, hex. */
   color: string;
   rarity: Rarity;
@@ -93,13 +91,11 @@ export interface GeneratorDef {
   id: GeneratorId;
   baseCost: number;
   baseProd: number;
-  emoji: string;
 }
 
 export interface LocationDef {
   id: LocationId;
   chapter: number;
-  emoji: string;
   /** Ингредиенты: [обычный, редкий]. */
   drops: [IngredientId, IngredientId];
   /** Какая роль героя здесь эффективнее. */
@@ -110,7 +106,6 @@ export interface LocationDef {
 
 export interface IngredientDef {
   id: IngredientId;
-  emoji: string;
   rarity: Rarity;
   color: string;
 }
@@ -142,7 +137,7 @@ export interface ChapterText {
 
 /** Все тексты, которые пишет нарративный дизайнер. Ключи — id из механики. */
 export interface GameTexts {
-  speakers: Record<string, { name: string; emoji: string }>;
+  speakers: Record<string, { name: string; icon: string }>;
   prologue: DialogueLine[];
   chapters: ChapterText[]; // ровно 8
   epilogue: DialogueLine[];
@@ -159,5 +154,5 @@ export interface GameTexts {
 export interface EventText {
   name: string;
   desc: string;
-  emoji: string;
+  icon: string;
 }

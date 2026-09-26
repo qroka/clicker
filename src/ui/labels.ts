@@ -9,11 +9,11 @@ export const RARITY_LABEL: Record<Rarity, string> = {
   legendary: 'Легендарный',
 };
 
-export const ROLE_LABEL: Record<HeroRole, { name: string; emoji: string }> = {
-  herbalist: { name: 'Травник', emoji: '🌿' },
-  warrior: { name: 'Воин', emoji: '⚔️' },
-  sage: { name: 'Мудрец', emoji: '📚' },
-  merchant: { name: 'Торговец', emoji: '💰' },
+export const ROLE_LABEL: Record<HeroRole, { name: string; icon: string }> = {
+  herbalist: { name: 'Травник', icon: 'role_herbalist' },
+  warrior: { name: 'Воин', icon: 'role_warrior' },
+  sage: { name: 'Мудрец', icon: 'role_sage' },
+  merchant: { name: 'Торговец', icon: 'role_merchant' },
 };
 
 export function bonusText(type: BonusType, value: number, target?: GeneratorId): string {
@@ -45,5 +45,5 @@ export function bonusText(type: BonusType, value: number, target?: GeneratorId):
 }
 
 export function speaker(id: string) {
-  return TEXTS.speakers[id] ?? { name: id, emoji: '❔' };
+  return TEXTS.speakers[id] ?? { name: id, icon: 'question' };
 }

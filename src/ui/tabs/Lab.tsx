@@ -7,6 +7,7 @@ import type { IngredientId, RecipeDef } from '../../core/types';
 import { bonusText } from '../labels';
 import { fmt, fmtTime } from '../format';
 import { burst } from '../fx';
+import { Ic, Px } from '../Px';
 
 export function brewText(b: RecipeDef['brew']): string {
   switch (b.kind) {
@@ -38,7 +39,7 @@ export function LabTab() {
   const add = (id: IngredientId) => {
     if (distillMode) {
       const got = st.do((s) => E.distill(s, id, 10));
-      setMsg(got ? `⚗️ Перегнано в эссенцию: +${fmt(got)} 💧` : 'Нечего перегонять.');
+      setMsg(got ? `Перегнано в эссенцию: +${fmt(got)}` : 'Нечего перегонять.');
       return;
     }
     if (slots.length >= 3 || (s.ingredients[id] ?? 0) - used(id) <= 0) return;
@@ -52,17 +53,17 @@ export function LabTab() {
     if (r.kind === 'failed') {
       setMsg(
         r.closest === 0
-          ? '💨 Пшик. Ни один ингредиент не подходит к неизвестным рецептам.'
-          : `💨 Не вышло… но ${r.closest} из 3 ингредиентов подходят к одному неизвестному рецепту! (+3 💧)`,
+          ? 'Пшик. Ни один ингредиент не подходит к неизвестным рецептам.'
+          : `Не вышло… но ${r.closest} из 3 ингредиентов подходят к одному неизвестному рецепту! (+3 эссенции)`,
       );
     } else if (r.kind === 'locked') {
-      setMsg(s.chapter < 8 ? '🔒 Котёл не выдержит такой силы. Вернись в главе 8.' : `🔒 Для Великого Делания нужно 🪙 ${fmt(E.BAL.finalCost)} в казне.`);
+      setMsg(s.chapter < 8 ? 'Котёл не выдержит такой силы. Вернись в главе 8.' : `Для Великого Делания нужно ${fmt(E.BAL.finalCost)} золота в казне.`);
       return;
     } else if (r.kind === 'missing') {
       setMsg('Не хватает ингредиентов.');
       return;
     } else {
-      setMsg(r.kind === 'brewed' ? `✨ ${TEXTS.recipes[r.recipe].name} готово! ${brewText(RECIPES.find((x) => x.id === r.recipe)!.brew)}` : null);
+      setMsg(r.kind === 'brewed' ? `${TEXTS.recipes[r.recipe].name} готово! ${brewText(RECIPES.find((x) => x.id === r.recipe)!.brew)}` : null);
       const rect = el?.getBoundingClientRect();
       if (rect) burst(rect.left + rect.width / 2, rect.top + rect.height / 2, { n: 30, kind: 'bubble', colors: [RECIPES.find((x) => x.id === r.recipe)!.color, '#fff'], speed: 6 });
     }
@@ -84,7 +85,7 @@ export function LabTab() {
             const id = slots[i];
             return (
               <button key={i} class={`brew-slot ${id ? 'filled' : ''}`} onClick={() => id && remove(i)} style={id ? { borderColor: ING_BY_ID[id].color } : {}}>
-                {id ? ING_BY_ID[id].emoji : ''}
+                {id ? <Px id={id} scale={3} /> : ''}
               </button>
             );
           })}
@@ -93,7 +94,7 @@ export function LabTab() {
           class={`btn teal block big ${slots.length === 3 ? '' : 'disabled'}`}
           onClick={(e) => slots.length === 3 && doBrew(slots, e.currentTarget as HTMLElement)}
         >
-          🧪 Сварить
+          <Px id="flask" scale={2} /> Сварить
         </button>
         {msg && (
           <div class="small" style={{ marginTop: 10, textAlign: 'center', fontWeight: 700 }}>
@@ -105,14 +106,14 @@ export function LabTab() {
             const n = (s.ingredients[ing.id] ?? 0) - used(ing.id);
             return (
               <button key={ing.id} class={`ing ${n <= 0 ? 'empty' : ''}`} style={{ '--c': ing.color }} onClick={() => add(ing.id)} title={TEXTS.ingredients[ing.id].name}>
-                {ing.emoji}
+                <Px id={ing.id} scale={2} />
                 <span class="cnt num">{n}</span>
               </button>
             );
           })}
         </div>
         <button class={`btn ${distillMode ? 'violet' : 'ghost'} block`} style={{ marginTop: 10 }} onClick={() => { setDistillMode(!distillMode); setSlots([]); setMsg(null); }}>
-          {distillMode ? '⚗️ Перегонка: нажимай ингредиенты (по 10 шт.) · выйти' : '⚗️ Перегнать лишнее в эссенцию'}
+          {distillMode ? 'Перегонка: нажимай ингредиенты (по 10 шт.) · выйти' : 'Перегнать лишнее в эссенцию'}
         </button>
         <div class="small muted" style={{ marginTop: 10 }}>
           Выбери 3 ингредиента и попробуй. Неудачный опыт сжигает ингредиенты, зато кот подскажет, насколько ты был близок.
@@ -130,7 +131,7 @@ export function LabTab() {
               return (
                 <div key={r.id} class="recipe">
                   <div class="flask" style={{ '--c': r.color }}>
-                    🧪
+                    <Px id="flask" scale={2} tint={r.color} />
                   </div>
                   <div class="grow">
                     <b>{TEXTS.recipes[r.id].name}</b>
@@ -138,7 +139,10 @@ export function LabTab() {
                       Открытие: {bonusText(r.discovery.type, r.discovery.value, r.discovery.target)}
                     </div>
                     <div class="small muted">
-                      {r.ingredients.map((i) => ING_BY_ID[i].emoji).join(' ')} → {brewText(r.brew)}
+                      {r.ingredients.map((i, k) => (
+                        <Px key={k} id={i} scale={1} class="ic" />
+                      ))}{' '}
+                      → {brewText(r.brew)}
                     </div>
                   </div>
                   <button class={`btn ${can ? '' : 'disabled'}`} onClick={(e) => can && doBrew([...r.ingredients], e.currentTarget as HTMLElement)}>
@@ -168,9 +172,12 @@ export function LabTab() {
                     <b>{isFinal ? TEXTS.recipes[r.id].name : '???'}</b>
                     <div class="small muted">{TEXTS.recipes[r.id].desc}</div>
                     <div class="small" style={{ color: 'var(--gold)' }}>
-                      {'★'.repeat(stars)}
-                      <span class="dim">{'★'.repeat(4 - stars)}</span>
-                      {isFinal && <span class="muted"> · глава 8 + 🪙 {fmt(E.BAL.finalCost)}</span>}
+                      {Array.from({ length: 4 }).map((_, k) => (
+                        <Ic key={k} id={k < stars ? 'star' : 'star_empty'} />
+                      ))}
+                      {isFinal && <span class="muted">
+                          {' '}· глава 8 + <Ic id="coin" /> {fmt(E.BAL.finalCost)}
+                        </span>}
                     </div>
                   </div>
                 </div>

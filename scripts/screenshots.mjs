@@ -1,9 +1,10 @@
 import { chromium } from 'playwright-core';
 import { readFileSync } from 'node:fs';
 const SP = process.env.SP || '.';
-const URL = 'http://localhost:4173/';
+const URL = 'http://localhost:4175/';
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
-const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const ctx = await browser.newContext({ viewport: { width: 402, height: 874 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+await ctx.addInitScript(() => document.addEventListener('DOMContentLoaded', () => { const st = document.createElement('style'); st.textContent = ':root{--sat:62px!important;--sab:34px!important}'; document.head.appendChild(st); }));
 let page = await ctx.newPage();
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
