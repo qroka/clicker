@@ -7,6 +7,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { CHALLENGE_BY_ID } from '../data/progression';
 import { setNotation } from './format';
 import { haptic, setFxSettings, sfx } from './fx';
+import type { CloudStatus } from '../cloud/sync';
 
 const SAVE_KEY = 'alchemist-guild-save-v1';
 
@@ -16,7 +17,8 @@ export type Modal =
   | { type: 'loot'; loot: E.ExpeditionLoot; location: string; heroes: string[] }
   | { type: 'discover'; recipe: string }
   | { type: 'transmuted'; stones: number }
-  | { type: 'challengeDone'; id: string };
+  | { type: 'challengeDone'; id: string }
+  | { type: 'cloudConflict'; progress: number; updatedAt: number; useCloud: () => void; keepLocal: () => void };
 
 export interface Toast {
   id: number;
@@ -46,6 +48,9 @@ class Store {
   toasts: Toast[] = [];
   tab: Tab = 'shop';
   sheet: Sheet = null;
+  cloudStatus: CloudStatus = 'off';
+  cloudAt = 0;
+  private cloudStarted = false;
   buyAmount: 1 | 10 | 100 | 'max' = 1;
   private listeners = new Set<() => void>();
   private toastId = 1;
@@ -156,7 +161,41 @@ class Store {
       }
     });
     window.addEventListener('pagehide', () => this.save());
+    this.startCloud();
   }
+
+  /** Облачная синхронизация (Supabase грузится отдельным чанком, не тормозит старт). */
+  private startCloud() {
+    if (this.cloudStarted) return;
+    this.cloudStarted = true;
+    void import('../cloud/sync').then((cloud) => {
+      this.cloud = cloud;
+      void cloud.startCloud({
+        getLocal: () => ({ data: this.s, progress: this.s.allTimeEarned, updatedAt: this.s.lastTick }),
+        applyCloud: (data) => {
+          this.s = sanitize(migrate(data, Date.now()), Date.now());
+          E.applyOffline(this.s, Date.now());
+          this.applySettings();
+          this.save();
+          this.toast({ icon: 'save', title: 'Прогресс из облака', text: 'Загружен последний сейв', kind: 'info' });
+          this.bump();
+        },
+        askConflict: (cloud, useCloud, keepLocal) => {
+          this.modals.push({ type: 'cloudConflict', progress: cloud.progress, updatedAt: cloud.updatedAt, useCloud, keepLocal });
+          this.bump();
+        },
+        onStatus: (status, at) => {
+          this.cloudStatus = status;
+          if (at) this.cloudAt = at;
+          this.bump();
+        },
+      });
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) void this.cloud?.pushNow(true);
+    });
+  }
+  cloud: typeof import('../cloud/sync') | null = null;
 
   private dailyCheck(now: number) {
     const returning = this.s.daily.day !== '';

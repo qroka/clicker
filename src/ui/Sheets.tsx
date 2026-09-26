@@ -438,7 +438,28 @@ function Settings() {
     return (
       <div class="stack">
         {back}
-        <span class="label">Код прогресса</span>
+        <Row
+          icon={<Px id="save" scale={2} />}
+          name="Облачное сохранение"
+          count={st.cloudStatus === 'synced' ? <span class="plus">включено</span> : st.cloudStatus === 'connecting' ? '…' : 'нет связи'}
+          sub={
+            st.cloudStatus === 'synced'
+              ? `Синхронизировано в ${new Date(st.cloudAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`
+              : 'Прогресс сохранится в облако, когда появится интернет'
+          }
+        />
+        <button
+          class="btn2 block"
+          onClick={() => {
+            void st.cloud?.pushNow(true);
+            st.toast({ icon: 'save', title: 'Сохраняем в облако', kind: 'info' });
+          }}
+        >
+          Сохранить в облако сейчас
+        </button>
+        <span class="label" style={{ marginTop: 16 }}>
+          Код прогресса
+        </span>
         <textarea class="code" readOnly value={st.exportSave()} onFocus={(e) => (e.currentTarget as HTMLTextAreaElement).select()} />
         <button
           class="btn2 block"
@@ -460,6 +481,17 @@ function Settings() {
           }
         >
           Загрузить
+        </button>
+        <button
+          class="btn2 block"
+          style={{ marginTop: 16, color: 'var(--text-2)' }}
+          onClick={async () => {
+            if (!confirm('Удалить облачный аккаунт и все сохранения в облаке? Прогресс на этом устройстве останется.')) return;
+            const ok = await st.cloud?.deleteCloudAccount();
+            st.toast({ icon: ok ? 'check' : 'warning', title: ok ? 'Облачный аккаунт удалён' : 'Не удалось удалить', kind: 'info' });
+          }}
+        >
+          <Ic id="trash" /> Удалить облачный аккаунт
         </button>
       </div>
     );
@@ -515,7 +547,22 @@ function Settings() {
           </div>
         </div>
         <Row icon={<Px id="trophy" scale={2} />} name="Достижения" count={`${s.achievements.length}/${ACHIEVEMENTS.length}`} onClick={() => setView('ach')} />
-        <Row icon={<Px id="save" scale={2} />} name="Сохранение" onClick={() => setView('save')} />
+        <Row
+          icon={<Px id="save" scale={2} />}
+          name="Облако и сохранение"
+          count={
+            st.cloudStatus === 'synced' ? (
+              <span class="plus">{new Date(st.cloudAt).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
+            ) : st.cloudStatus === 'connecting' ? (
+              '…'
+            ) : st.cloudStatus === 'off' ? (
+              ''
+            ) : (
+              'нет связи'
+            )
+          }
+          onClick={() => setView('save')}
+        />
         <Row icon={<Px id="scroll" scale={2} />} name="Перечитать историю" onClick={() => st.modals.push({ type: 'dialogue', title: 'Пролог', lines: TEXTS.prologue }) && st.bump()} />
       </div>
 

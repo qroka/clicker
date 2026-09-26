@@ -167,6 +167,41 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
         </>
       );
       break;
+    case 'cloudConflict':
+      return (
+        <>
+          <div class="scrim" />
+          <div class="modal" role="dialog">
+            <div class="hero-art">
+              <Px id="save" scale={4} />
+            </div>
+            <div class="label">Облачное сохранение</div>
+            <h2 style={{ marginTop: 4 }}>В облаке больше прогресса</h2>
+            <p>
+              Сейв от {new Date(m.updatedAt).toLocaleString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })} ·{' '}
+              <span class="num gold">{fmt(m.progress)}</span> золота за всё время
+            </p>
+            <Cta
+              onClick={() => {
+                m.useCloud();
+                onClose();
+              }}
+            >
+              Загрузить из облака
+            </Cta>
+            <button
+              class="btn2 block"
+              style={{ marginTop: 8 }}
+              onClick={() => {
+                m.keepLocal();
+                onClose();
+              }}
+            >
+              Оставить прогресс устройства
+            </button>
+          </div>
+        </>
+      );
     case 'challengeDone': {
       const c = CHALLENGE_BY_ID[m.id];
       body = (
