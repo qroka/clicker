@@ -3,7 +3,7 @@ import { useStore } from '../store';
 import * as E from '../../core/engine';
 import { Cauldron } from '../Cauldron';
 import { burst, floatText, haptic, sfx } from '../fx';
-import { fmt, fmtTime, pct } from '../format';
+import { fmt, fmtTime } from '../format';
 import { TEXTS } from '../../data/texts';
 import { CHAPTER_THRESHOLDS, CHALLENGE_BY_ID, challengeGoal } from '../../data/progression';
 import type { BuffKind } from '../../core/state';
@@ -242,14 +242,35 @@ export function ShopTab() {
       <ShopScene />
       <button
         class="chapter"
-        onClick={() => chText && st.toast({ icon: 'book', title: `Глава ${s.chapter}. ${chText.title}`, text: next ? chText.goal : 'Свари Философский камень', kind: 'info' })}
+        onClick={() =>
+          chText &&
+          st.toast({
+            icon: 'book',
+            title: `Глава ${s.chapter}. ${chText.title}`,
+            text: next ? `${chText.goal}. Следующая глава — когда за забег заработаешь ${fmt(next)} золота` : chText.goal,
+            kind: 'info',
+          })
+        }
       >
         <div class="top">
           <span class="label">Глава {s.chapter}</span>
           <span class="ttl">{chText?.title}</span>
-          {next && <span class="pc">{pct(chProgress)}</span>}
         </div>
-        {next && <Bar value={chProgress} />}
+        {next ? (
+          <>
+            <Bar value={chProgress} />
+            <div class="goal">
+              <span>Заработай за забег</span>
+              <span class="num">
+                <b>{fmt(Math.min(s.runEarned, next))}</b> / {fmt(next)}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div class="goal">
+            <span>{chText?.goal ?? 'Свари Философский камень'}</span>
+          </div>
+        )}
       </button>
 
       <ExpeditionStrip />
