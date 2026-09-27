@@ -78,7 +78,7 @@ export function LabTab() {
           {[0, 1, 2].map((i) => {
             const id = slots[i];
             return (
-              <button key={i} class={`slot ${id ? '' : 'empty'}`} onClick={() => id && remove(i)} aria-label={id ? 'Убрать ингредиент' : 'Пустой слот'}>
+              <button key={i} class={`slot ${id ? '' : 'vacant'}`} onClick={() => id && remove(i)} aria-label={id ? 'Убрать ингредиент' : 'Пустой слот'}>
                 {id ? <Px id={id} scale={3} /> : null}
               </button>
             );
@@ -88,9 +88,9 @@ export function LabTab() {
           {INGREDIENTS.map((ing) => {
             const n = (s.ingredients[ing.id] ?? 0) - used(ing.id);
             return (
-              <button key={ing.id} class={`ing ${n <= 0 ? 'empty' : ''}`} onClick={() => add(ing.id)} aria-label={TEXTS.ingredients[ing.id].name}>
+              <button key={ing.id} class={`ing ${n <= 0 ? 'none' : ''}`} onClick={() => add(ing.id)} aria-label={TEXTS.ingredients[ing.id].name}>
                 <Px id={ing.id} scale={2} />
-                <span class="cnt">{n}</span>
+                <span class="cnt">{fmt(n)}</span>
               </button>
             );
           })}

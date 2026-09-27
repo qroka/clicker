@@ -901,7 +901,7 @@ button.lrow:active {
 }
 .hero-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 .tile {
@@ -999,7 +999,7 @@ button.lrow:active {
 }
 .pick-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 .pick {
@@ -1060,32 +1060,35 @@ button.lrow:active {
   display: grid;
   place-items: center;
 }
-.slot.empty {
+.slot.vacant {
   background: transparent;
   box-shadow: inset 0 0 0 2px var(--line);
 }
 .ing-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 6px;
   margin-bottom: 16px;
 }
 .ing {
   position: relative;
+  min-width: 0;
   aspect-ratio: 1;
   border-radius: 10px;
   background: var(--bg-3);
   display: grid;
   place-items: center;
 }
-.ing.empty {
+.ing.none {
   opacity: 0.4;
 }
 .ing .cnt {
   position: absolute;
-  right: 5px;
+  right: 4px;
   bottom: 2px;
-  font: 400 13px var(--px);
+  max-width: calc(100% - 6px);
+  overflow: hidden;
+  font: 400 12px var(--px);
   color: var(--text-2);
 }
 .msg {
@@ -1114,7 +1117,7 @@ button.lrow:active {
 }
 .talent-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 8px;
 }
 .talent-col {
@@ -1562,7 +1565,7 @@ input.code {
   -webkit-user-select: text;
   user-select: text;
 }
-.empty {
+.empty-state {
   display: grid;
   place-items: center;
   gap: 12px;
@@ -1697,4 +1700,37 @@ input.code:focus,
 textarea.code:focus {
   outline: none;
   box-shadow: inset 0 0 0 2px var(--gold);
+}
+
+/* ─── Кольцо нагрева вокруг котла ─── */
+.potwrap {
+  position: relative;
+}
+.heat-ring {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  shape-rendering: geometricPrecision;
+}
+.heat-ring path {
+  stroke: var(--line);
+  transition: stroke 0.12s;
+}
+.heat-ring path.on {
+  stroke: var(--gold);
+}
+.heat-ring.boiling path {
+  stroke: var(--gold);
+  animation: blink 0.35s steps(2) infinite;
+}
+.heat-ring.boiling {
+  filter: drop-shadow(0 0 8px rgba(242, 184, 75, 0.45));
+}
+.potstack {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }

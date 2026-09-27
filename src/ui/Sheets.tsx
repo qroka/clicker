@@ -213,7 +213,7 @@ function HeroView({ id }: { id: string }) {
   const hs = s.heroes[id];
   if (!E.heroUnlocked(s, h)) {
     return (
-      <div class="empty">
+      <div class="empty-state">
         <Portrait h={h} locked size="lg" />
         <span>Этот гость появится в главе {h.chapter}</span>
       </div>
