@@ -38,14 +38,14 @@ console.log('expeditions:', await page.$$eval('.lrow .bar', (x) => x.length));
 // Варка: неудача и известный рецепт
 await page.click('.tab:nth-child(4)');
 await page.waitForTimeout(200);
-const ings = await page.$$('.ing:not(.empty)');
+const ings = await page.$$('.ing:not(.none)');
 for (let i = 0; i < 3; i++) await ings[Math.min(i, ings.length - 1)].click();
 await page.click('.brew .cta');
 await page.waitForTimeout(300);
 console.log('brew msg:', await page.$eval('.msg', (e) => e.textContent).catch(() => '—'));
 await shot('brew');
 await page.click('text=Перегнать в эссенцию');
-await page.click('.ing:not(.empty) >> nth=0');
+await page.click('.ing:not(.none) >> nth=0');
 console.log('distill msg:', await page.$eval('.msg', (e) => e.textContent).catch(() => '—'));
 // Трансмутация
 await page.click('.tab:nth-child(5)');

@@ -3,7 +3,6 @@ import { useStore, type Modal } from './store';
 import { TEXTS } from '../data/texts';
 import { ING_BY_ID, RECIPES } from '../data/world';
 import { CHALLENGE_BY_ID } from '../data/progression';
-import * as E from '../core/engine';
 import { fmt, fmtTime } from './format';
 import { bonusText, speaker } from './labels';
 import { brewText } from './tabs/Lab';
@@ -109,8 +108,6 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       );
       break;
     case 'loot': {
-      const story = (m.loot.success ? TEXTS.expeditionStories.success : TEXTS.expeditionStories.fail)[Math.floor(Math.random() * 8)] ?? '';
-      const hero = E.HERO_BY_ID[m.heroes[0]]?.name ?? 'Отряд';
       cta = 'Забрать добычу';
       body = (
         <>
@@ -118,7 +115,7 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
             <Px id={m.loot.success ? 'bag' : 'broken'} scale={4} />
           </div>
           <h2>{m.loot.success ? 'Удачная вылазка' : 'Неудача'}</h2>
-          <p>{story.replaceAll('{hero}', hero).replaceAll('{place}', TEXTS.locations[m.location as keyof typeof TEXTS.locations]?.name ?? '')}</p>
+          <p>{m.story}</p>
           <IngList ings={m.loot.ingredients} />
           <div class="row" style={{ flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
             <span class="pill essence">

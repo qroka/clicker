@@ -624,7 +624,7 @@ function Settings() {
           }
           onClick={() => setView('save')}
         />
-        <Row icon={<Px id="scroll" scale={2} />} name="Перечитать историю" onClick={() => st.modals.push({ type: 'dialogue', title: 'Пролог', lines: TEXTS.prologue }) && st.bump()} />
+        <Row icon={<Px id="scroll" scale={2} />} name="История" count={`${Math.min(s.chapter, TEXTS.chapters.length)}/${TEXTS.chapters.length}`} onClick={() => st.openSheet('story')} />
       </div>
 
       <Section title="Статистика">
@@ -657,6 +657,38 @@ function Settings() {
   );
 }
 
+/** Все открытые главы можно перечитать: пролог, вступления глав, эпилог. */
+function StorySheet() {
+  const st = useStore();
+  const s = st.s;
+  return (
+    <div class="stack">
+      <Row icon={<Px id="scroll" scale={2} />} name="Пролог" sub="Как ты попал в лавку" onClick={() => st.replayStory('Пролог', TEXTS.prologue)} />
+      {TEXTS.chapters.map((ch, i) => {
+        const open = i < s.chapter;
+        return (
+          <Row
+            key={i}
+            icon={<Px id={open ? 'book' : 'lock'} scale={2} />}
+            name={open ? ch.title : '???'}
+            count={`Глава ${i + 1}`}
+            sub={open ? ch.goal : 'Откроется по ходу игры'}
+            locked={!open}
+            onClick={open ? () => st.replayStory(`Глава ${i + 1}. ${ch.title}`, ch.intro) : undefined}
+          />
+        );
+      })}
+      <Row
+        icon={<Px id={s.finalDone ? 'stone' : 'lock'} scale={2} />}
+        name={s.finalDone ? 'Эпилог' : '???'}
+        sub={s.finalDone ? 'Философский камень' : 'Свари Философский камень'}
+        locked={!s.finalDone}
+        onClick={s.finalDone ? () => st.replayStory('Эпилог', TEXTS.epilogue) : undefined}
+      />
+    </div>
+  );
+}
+
 export function Sheets() {
   const st = useStore();
   const sh = st.sheet;
@@ -672,6 +704,12 @@ export function Sheets() {
     return (
       <Sheet title="Меню" onClose={close}>
         <Settings />
+      </Sheet>
+    );
+  if (sh === 'story')
+    return (
+      <Sheet title="История" onClose={close}>
+        <StorySheet />
       </Sheet>
     );
   if ('hero' in sh)
