@@ -1,5 +1,6 @@
 import type { BonusType, GeneratorId, HeroRole, Rarity } from '../core/types';
 import { TEXTS } from '../data/texts';
+import { HEROES } from '../data/heroes';
 import { pct } from './format';
 
 export const RARITY_LABEL: Record<Rarity, string> = {
@@ -44,6 +45,9 @@ export function bonusText(type: BonusType, value: number, target?: GeneratorId):
   }
 }
 
+const HERO_NAME = Object.fromEntries(HEROES.map((h) => [h.id, h.name]));
+
+/** Имя и портрет говорящего: сюжетные персонажи, а также любой герой гильдии по его id. */
 export function speaker(id: string) {
-  return TEXTS.speakers[id] ?? { name: id, icon: 'question' };
+  return TEXTS.speakers[id] ?? (HERO_NAME[id] ? { name: HERO_NAME[id], icon: id } : { name: id, icon: 'question' });
 }

@@ -3,6 +3,7 @@ import { migrate, newGame, type GameState } from '../core/state';
 import * as E from '../core/engine';
 import type { DialogueLine, IngredientId } from '../core/types';
 import { TEXTS } from '../data/texts';
+import { HERO_VISITS } from '../data/visits';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { CHALLENGE_BY_ID } from '../data/progression';
 import { setNotation } from './format';
@@ -18,6 +19,7 @@ export type Modal =
   | { type: 'discover'; recipe: string }
   | { type: 'transmuted'; stones: number }
   | { type: 'challengeDone'; id: string }
+  | { type: 'visit' }
   | { type: 'cloudConflict'; progress: number; updatedAt: number; useCloud: () => void; keepLocal: () => void };
 
 export interface Toast {
@@ -222,6 +224,16 @@ class Store {
       sfx.fanfare();
       this.modals.push({ type: 'challengeDone', id: ev.challengeDone });
     }
+    if (ev.visitArrived) {
+      sfx.soft();
+      const h = E.HERO_BY_ID[ev.visitArrived];
+      // На главном экране гостя и так видно; на других вкладках — подсказка
+      if (this.tab !== 'shop') this.toast({ icon: h.id, title: `${h.name} заглядывает в лавку`, text: 'Загляни в Лавку — у гостя есть предложение', kind: 'info' });
+    }
+    if (ev.visitLeft) {
+      const h = E.HERO_BY_ID[ev.visitLeft];
+      this.toast({ icon: h.id, title: h.name, text: 'Гость не дождался разговора и заглянет в другой раз', kind: 'info' });
+    }
     if (now % 5000 < 100) this.dailyCheck(now);
     this.bump();
   }
@@ -259,6 +271,54 @@ class Store {
     const m = this.modals.shift();
     if (m?.type === 'dialogue') m.onDone?.();
     this.save();
+    this.bump();
+  }
+
+  /** Тап по гостю: разговор (кусочек личной истории или приветствие), потом предложение. */
+  openVisit() {
+    const v = this.s.visit;
+    if (!v || this.modals.some((m) => m.type === 'visit')) return;
+    v.talked = true;
+    const h = E.HERO_BY_ID[v.hero];
+    const text = HERO_VISITS[v.hero];
+    const talks = this.s.heroTalks[v.hero] ?? 0;
+    haptic('light');
+    if (text && talks < text.arc.length) {
+      this.modals.push({
+        type: 'dialogue',
+        title: `${h.name} · ${talks + 1}/${text.arc.length}`,
+        lines: text.arc[talks],
+        onDone: () => {
+          this.s.heroTalks[v.hero] = Math.max(this.s.heroTalks[v.hero] ?? 0, talks + 1);
+          this.modals.push({ type: 'visit' });
+        },
+      });
+    } else this.modals.push({ type: 'visit' });
+    this.bump();
+  }
+
+  acceptVisit() {
+    const v = this.s.visit;
+    if (!v) return;
+    const r = E.acceptVisit(this.s, this.mods(), Date.now(), rng);
+    if (!r) {
+      sfx.error();
+      return;
+    }
+    sfx.buy();
+    haptic('medium');
+    const h = E.HERO_BY_ID[v.hero];
+    this.toast({ icon: h.id, title: h.name, text: HERO_VISITS[v.hero]?.accept ?? 'По рукам!', kind: 'gold' });
+    this.save();
+    this.bump();
+  }
+
+  declineVisit() {
+    const v = this.s.visit;
+    if (!v) return;
+    E.declineVisit(this.s, Date.now(), rng);
+    const h = E.HERO_BY_ID[v.hero];
+    this.toast({ icon: h.id, title: h.name, text: HERO_VISITS[v.hero]?.decline ?? 'Ничего, загляну ещё.', kind: 'info' });
     this.bump();
   }
 

@@ -37,6 +37,30 @@ function ShopScene() {
   );
 }
 
+/** Гость из гильдии стоит у котла; тап — разговор и предложение. */
+function Visitor() {
+  const st = useStore();
+  const v = st.s.visit;
+  if (!v) return null;
+  const h = E.HERO_BY_ID[v.hero];
+  const leaving = !v.talked && v.leaves - Date.now() < 15_000;
+  return (
+    <button
+      key={v.arrived}
+      class={`visitor ${leaving ? 'leaving' : ''}`}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={() => st.openVisit()}
+      aria-label={`${h.name} — поговорить`}
+    >
+      <span class="bang">!</span>
+      <span class="plate">
+        <Px id={h.id} scale={3} />
+      </span>
+      <span class="who">{h.name.split(' ')[0]}</span>
+    </button>
+  );
+}
+
 /** Экспедиции на главном экране: видно, кто в пути и кто уже вернулся. */
 function ExpeditionStrip() {
   const st = useStore();
@@ -312,6 +336,7 @@ export function ShopTab() {
             <Px id="spark" scale={3} />
           </button>
         )}
+        <Visitor />
         <div class="cat">
           <div class="cat-body" ref={catRef} onClick={petCat}>
             <Px id={catFace} scale={3} />

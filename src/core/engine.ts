@@ -1,7 +1,7 @@
 // Игровой движок: чистые функции над GameState. Никакого DOM — используется и в UI, и в симуляции баланса.
 
 import type { BonusType, GeneratorId, HeroDef, IngredientId, LocationId, Rarity } from './types';
-import type { BuffKind, Expedition, GameState, Quest } from './state';
+import type { BuffKind, Expedition, GameState, Quest, Visit, VisitKind } from './state';
 import { newGame } from './state';
 import { EXPEDITION_DURATIONS, FINAL_RECIPE, GENERATORS, GEN_BY_ID, ING_BY_ID, LOCATIONS, LOC_BY_ID, RECIPES } from '../data/world';
 import {
@@ -50,6 +50,10 @@ export const BAL = {
   finalCost: 3e25,
   goldRushCooldownSec: 600,
   wispGoldSeconds: 240,
+  // Визиты героев: интервал между гостями в активной игре, сколько гость ждёт, пока его заметят
+  visitMinSec: 7 * 60,
+  visitMaxSec: 12 * 60,
+  visitStaySec: 120,
   distillEssence: { common: 1, rare: 3, epic: 8, legendary: 20 } as Record<Rarity, number>,
   stoneBonus: 0.01,
   heroBonusPerRecruit: 0.03,
@@ -389,6 +393,10 @@ export interface TickEvents {
   achievements: string[];
   expeditionsDone: number;
   challengeDone?: string;
+  /** Герой зашёл в лавку. */
+  visitArrived?: string;
+  /** Герой ушёл, так и не дождавшись разговора. */
+  visitLeft?: string;
 }
 
 export function tick(s: GameState, now: number, rng: Rng): TickEvents {
@@ -416,6 +424,9 @@ export function tick(s: GameState, now: number, rng: Rng): TickEvents {
   for (const k of Object.keys(s.buffs) as BuffKind[]) if ((s.buffs[k]?.until ?? 0) <= now) delete s.buffs[k];
 
   const ev: TickEvents = { achievements: [], expeditionsDone: 0 };
+  const vis = tickVisit(s, now, rng);
+  if (vis?.arrived) ev.visitArrived = vis.arrived;
+  if (vis?.left) ev.visitLeft = vis.left;
   const ch = checkChapter(s);
   if (ch) ev.chapterUp = ch;
   ev.achievements = checkAchievements(s);
@@ -980,3 +991,145 @@ export function claimLogin(s: GameState, m: Mods, now: number, rng: Rng): boolea
 }
 
 export { challengeGoal, CHALLENGES, CHALLENGE_BY_ID, LOCATIONS };
+
+// ─── Визиты героев ───────────────────────────────────────────────────────────
+// Раз в несколько минут активной игры нанятый герой заглядывает в лавку, рассказывает
+// кусочек своей истории и предлагает сделку по своей роли.
+
+export interface VisitOffer {
+  kind: VisitKind;
+  /** Цена сделки (пусто — бесплатно). */
+  cost: { gold?: number; essence?: number };
+  buff?: { kind: BuffKind; mult: number; seconds: number };
+  essence?: number;
+  ingredients?: number;
+  /** Герой получает уровень. */
+  level?: boolean;
+  /** Доля оставшегося времени экспедиций, которую срезает гость. */
+  haste?: number;
+}
+
+export interface VisitResult {
+  offer: VisitOffer;
+  ingredients?: Partial<Record<IngredientId, number>>;
+}
+
+function scheduleVisit(s: GameState, now: number, rng: Rng) {
+  s.nextVisitAt = now + (BAL.visitMinSec + rng() * (BAL.visitMaxSec - BAL.visitMinSec)) * 1000;
+}
+
+function hastableExpeditions(s: GameState, now: number): Expedition[] {
+  return s.expeditions.filter((e) => e.end - now > 60_000);
+}
+
+/** Какую сделку предложит герой: по роли, иногда (если экспедиции в пути) — ускорить их. */
+export function visitKindFor(s: GameState, h: HeroDef, now: number, rng: Rng): VisitKind {
+  if (hastableExpeditions(s, now).length && rng() < 0.3) return 'haste';
+  switch (h.role) {
+    case 'warrior':
+      return h.bonus.type === 'critMult' || h.bonus.type === 'critChance' ? 'crit' : 'tap';
+    case 'herbalist':
+      return 'prod';
+    case 'merchant':
+      return 'trade';
+    case 'sage':
+      return (s.heroes[h.id]?.level ?? 1) < BAL.maxHeroLevel ? 'train' : 'prod';
+  }
+}
+
+/** Кто зайдёт: нанятые и не ушедшие в экспедицию; чаще те, чью историю ещё не дослушали. */
+export function pickVisitor(s: GameState, rng: Rng): HeroDef | null {
+  const busy = busyHeroes(s);
+  const pool = HEROES.filter((h) => s.heroes[h.id]?.recruited && !busy.has(h.id));
+  if (!pool.length) return null;
+  const w = pool.map((h) => ((s.heroTalks[h.id] ?? 0) < 3 ? 3 : 1));
+  let r = rng() * w.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < pool.length; i++) if ((r -= w[i]) < 0) return pool[i];
+  return pool[pool.length - 1];
+}
+
+function tickVisit(s: GameState, now: number, rng: Rng): { arrived?: string; left?: string } | null {
+  if (s.visit) {
+    if (!s.visit.talked && now >= s.visit.leaves) {
+      const left = s.visit.hero;
+      s.visit = null;
+      scheduleVisit(s, now, rng);
+      return { left };
+    }
+    return null;
+  }
+  if (now < s.nextVisitAt || s.chapter < FEATURE_CHAPTER.guild || isRule(s, 'noBuffs')) return null;
+  const h = pickVisitor(s, rng);
+  if (!h) {
+    scheduleVisit(s, now, rng);
+    return null;
+  }
+  s.visit = { hero: h.id, kind: visitKindFor(s, h, now, rng), arrived: now, leaves: now + BAL.visitStaySec * 1000 };
+  return { arrived: h.id };
+}
+
+/** Условия сделки считаются в момент показа: от текущего дохода и уровня героя. */
+export function visitOffer(s: GameState, m: Mods, v: Visit): VisitOffer {
+  const h = HERO_BY_ID[v.hero];
+  switch (v.kind) {
+    case 'tap':
+      return { kind: 'tap', cost: {}, buff: { kind: 'tapBoost', mult: 3, seconds: 60 } };
+    case 'crit':
+      return { kind: 'crit', cost: {}, buff: { kind: 'critBoost', mult: 2, seconds: 60 } };
+    case 'prod':
+      return { kind: 'prod', cost: {}, buff: { kind: 'prodBoost', mult: 2, seconds: 90 } };
+    case 'trade': {
+      const gold = Math.max(100, Math.round(baseGps(s, m) * 180));
+      const essence = Math.round((10 + s.chapter * 4) * m.essence * 2);
+      return { kind: 'trade', cost: { gold }, essence, ingredients: 3 };
+    }
+    case 'train':
+      return { kind: 'train', cost: { essence: Math.max(1, Math.ceil(heroLevelCost(s, m, h) * 0.5)) }, level: true };
+    case 'haste':
+      return { kind: 'haste', cost: {}, haste: 0.5 };
+  }
+}
+
+export function canAcceptVisit(s: GameState, m: Mods): boolean {
+  if (!s.visit) return false;
+  const o = visitOffer(s, m, s.visit);
+  return s.gold >= (o.cost.gold ?? 0) && s.essence >= (o.cost.essence ?? 0);
+}
+
+/** Принять предложение гостя. Гость уходит, следующий придёт через несколько минут. */
+export function acceptVisit(s: GameState, m: Mods, now: number, rng: Rng): VisitResult | null {
+  const v = s.visit;
+  if (!v || !canAcceptVisit(s, m)) return null;
+  const offer = visitOffer(s, m, v);
+  s.gold -= offer.cost.gold ?? 0;
+  s.essence -= offer.cost.essence ?? 0;
+  const res: VisitResult = { offer };
+  if (offer.buff) {
+    const b = offer.buff;
+    const cur = s.buffs[b.kind];
+    s.buffs[b.kind] = { mult: Math.max(b.mult, cur && cur.until > now ? cur.mult : 0), until: Math.max(now + b.seconds * 1000, cur?.until ?? 0) };
+  }
+  if (offer.essence) s.essence += offer.essence;
+  if (offer.ingredients) res.ingredients = grantIngredients(s, offer.ingredients, rng);
+  if (offer.level) {
+    const st = s.heroes[v.hero];
+    if (st && st.level < BAL.maxHeroLevel) {
+      st.level++;
+      s.stats.heroLevels++;
+      questProgress(s, 'heroLevels', 1);
+    }
+  }
+  if (offer.haste) for (const e of hastableExpeditions(s, now)) e.end = Math.round(now + (e.end - now) * (1 - offer.haste));
+  s.stats.visits++;
+  s.visit = null;
+  scheduleVisit(s, now, rng);
+  return res;
+}
+
+/** Вежливо отказаться: гость уходит без обид. */
+export function declineVisit(s: GameState, now: number, rng: Rng): void {
+  if (!s.visit) return;
+  s.stats.visits++;
+  s.visit = null;
+  scheduleVisit(s, now, rng);
+}
