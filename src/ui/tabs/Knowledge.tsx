@@ -63,7 +63,11 @@ function Transmutation() {
         </>
       ) : (
         <Cta off={!can} onClick={() => setConfirm(true)}>
-          {can ? `Получить ${fmt(pending)} ${plural(pending, 'камень', 'камня', 'камней')}` : `Следующий камень при ${fmt(E.goldForNextStone(s))}`}
+          {s.challenge
+            ? 'Недоступно в Изнанке'
+            : can
+              ? `Получить ${fmt(pending)} ${plural(pending, 'камень', 'камня', 'камней')}`
+              : `Следующий камень при ${fmt(E.goldForNextStone(s))}`}
         </Cta>
       )}
     </div>
@@ -132,15 +136,31 @@ function Talents() {
 function Challenges() {
   const st = useStore();
   const s = st.s;
-  const [confirm, setConfirm] = useState<string | null>(null);
+  const [confirmReset, setConfirmReset] = useState<string | null>(null);
   if (s.transmutations < 1) return null;
   return (
-    <Section title="Испытания" help={() => st.toast({ icon: 'trophy', title: 'Испытания', text: 'Забег с особым правилом. Старт — это трансмутация', kind: 'info' })}>
+    <Section
+      title="Испытания"
+      help={() =>
+        st.toast({
+          icon: 'trophy',
+          title: 'Испытания — Изнанка',
+          text: 'Отдельное измерение с особым правилом. Основной мир сохраняется, выйти можно в любой момент',
+          kind: 'info',
+        })
+      }
+    >
+      <p class="hint" style={{ marginBottom: 12 }}>
+        Испытание проходит в Изнанке. Основной мир ждёт тебя и приносит доход, как в офлайне; прогресс испытания сохраняется, если выйти
+        раньше.
+      </p>
       <div class="stack">
         {CHALLENGES.map((c) => {
           const done = s.challengeDone[c.id] ?? 0;
           const active = s.challenge === c.id;
           const complete = done >= CHALLENGE_MAX;
+          const goal = challengeGoal(c, done);
+          const saved = s.challengeRuns[c.id];
           return (
             <Row
               key={c.id}
@@ -152,7 +172,29 @@ function Challenges() {
                 <>
                   {c.desc}
                   <br />
-                  <span class="plus">{c.rewardText}</span> · цель <span class="num t2">{fmt(challengeGoal(c, done))}</span>
+                  <span class="plus">{c.rewardText}</span> · цель <span class="num t2">{fmt(goal)}</span>
+                  {saved && !active && (
+                    <>
+                      <br />
+                      Сохранён прогресс: <span class="num t2">{fmt(saved.runEarned)}</span>
+                      {' · '}
+                      {confirmReset === c.id ? (
+                        <a
+                          class="link"
+                          onClick={() => {
+                            st.do((s) => E.resetChallengeProgress(s, c.id));
+                            setConfirmReset(null);
+                          }}
+                        >
+                          точно сбросить?
+                        </a>
+                      ) : (
+                        <a class="link" onClick={() => setConfirmReset(c.id)}>
+                          начать заново
+                        </a>
+                      )}
+                    </>
+                  )}
                 </>
               }
               right={
@@ -161,23 +203,12 @@ function Challenges() {
                     <Glyph name="check" />
                   </span>
                 ) : active ? (
-                  <button class="btn2" onClick={() => st.do((s) => E.abandonChallenge(s))}>
-                    Сдаться
-                  </button>
-                ) : confirm === c.id ? (
-                  <button
-                    class="btn2"
-                    style={{ color: 'var(--gold)' }}
-                    onClick={() => {
-                      setConfirm(null);
-                      st.startChallenge(c.id);
-                    }}
-                  >
-                    Точно?
+                  <button class="btn2" onClick={() => st.leaveChallenge()}>
+                    Домой
                   </button>
                 ) : (
-                  <button class={`btn2 ${s.challenge ? 'off' : ''}`} onClick={() => !s.challenge && setConfirm(c.id)}>
-                    Начать
+                  <button class={`btn2 ${s.challenge ? 'off' : ''}`} onClick={() => !s.challenge && st.startChallenge(c.id)}>
+                    {saved ? 'Продолжить' : 'Войти'}
                   </button>
                 )
               }

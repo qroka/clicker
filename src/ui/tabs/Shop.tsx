@@ -8,7 +8,7 @@ import { TEXTS } from '../../data/texts';
 import { CHAPTER_THRESHOLDS, CHALLENGE_BY_ID, challengeGoal } from '../../data/progression';
 import type { BuffKind } from '../../core/state';
 import { Ic, Px } from '../Px';
-import { chapterPalette } from '../theme';
+import { worldPalette } from '../theme';
 import { Bar } from '../kit';
 import { HEROES } from '../../data/heroes';
 import { LOC_BY_ID } from '../../data/world';
@@ -32,8 +32,62 @@ function ShopScene() {
       {img('bg_shelf', 'sc-shelf')}
       {img('bg_shelf2', 'sc-shelf2')}
       <div class="sc-floor" style={{ ...bg('bg_floor'), '--fill': `url(${spriteUrl('bg_floor_fill')})`, '--fs': `${32 * S}px ${11 * S}px`, '--fh': `${16 * S}px` }} />
+      <div class="sc-rift" />
       <div class="sc-shade" />
     </div>
+  );
+}
+
+/** Заголовок в Изнанке: какое испытание, цель и выход домой. */
+function RiftHeader() {
+  const st = useStore();
+  const s = st.s;
+  const c = CHALLENGE_BY_ID[s.challenge!];
+  const goal = challengeGoal(c, s.challengeDone[c.id] ?? 0);
+  const progress = Math.min(1, Math.log10(Math.max(1, s.runEarned) + 1) / Math.log10(goal + 1));
+  return (
+    <div class="chapter rift-head">
+      <div class="top">
+        <span class="label">Изнанка</span>
+        <span class="ttl">
+          <Ic id={c.icon} /> {c.name}
+        </span>
+        <button class="btn2 home" onClick={() => st.leaveChallenge()}>
+          Домой
+        </button>
+      </div>
+      <Bar value={progress} />
+      <div class="goal">
+        <span>{c.desc}</span>
+        <span class="num">
+          <b>{fmt(Math.min(s.runEarned, goal))}</b> / {fmt(goal)}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Гость из гильдии стоит у котла; тап — разговор и предложение. */
+function Visitor() {
+  const st = useStore();
+  const v = st.s.visit;
+  if (!v) return null;
+  const h = E.HERO_BY_ID[v.hero];
+  const leaving = !v.talked && v.leaves - Date.now() < 15_000;
+  return (
+    <button
+      key={v.arrived}
+      class={`visitor ${leaving ? 'leaving' : ''}`}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={() => st.openVisit()}
+      aria-label={`${h.name} — поговорить`}
+    >
+      <span class="bang">!</span>
+      <span class="plate">
+        <Px id={h.id} scale={3} />
+      </span>
+      <span class="who">{h.name.split(' ')[0]}</span>
+    </button>
   );
 }
 
@@ -134,7 +188,7 @@ export function ShopTab() {
     }, 3800);
     return () => clearInterval(iv);
   }, []);
-  const potionColor = chapterPalette(s.chapter)[0];
+  const potionColor = worldPalette(s.chapter, !!s.challenge)[0];
   const replay = (el: Element | null | undefined, cls: string) => {
     if (!el) return;
     el.classList.remove(cls);
@@ -177,10 +231,14 @@ export function ShopTab() {
     return () => clearTimeout(t);
   }, [tip]);
 
+  const noTapHint = useRef(0);
   const onTap = (x: number, y: number) => {
     const r = st.tap();
     if (r.gold <= 0) {
-      floatText(x, y - 20, 'Не отвечает…', 'teal');
+      if (Date.now() - noTapHint.current > 1200) {
+        noTapHint.current = Date.now();
+        floatText(x, y - 20, 'Не отвечает…', 'teal');
+      }
       return;
     }
     floatText(x, y - 20, `+${fmt(r.gold, 1)}`, r.crit ? 'crit' : '');
@@ -240,50 +298,47 @@ export function ShopTab() {
   return (
     <div class="shop">
       <ShopScene />
-      <button
-        class="chapter"
-        onClick={() =>
-          chText &&
-          st.toast({
-            icon: 'book',
-            title: `Глава ${s.chapter}. ${chText.title}`,
-            text: next ? `${chText.goal}. Следующая глава — когда за забег заработаешь ${fmt(next)} золота` : chText.goal,
-            kind: 'info',
-          })
-        }
-      >
-        <div class="top">
-          <span class="label">Глава {s.chapter}</span>
-          <span class="ttl">{chText?.title}</span>
-        </div>
-        {next ? (
-          <>
-            <Bar value={chProgress} />
-            <div class="goal">
-              <span>Заработай за забег</span>
-              <span class="num">
-                <b>{fmt(Math.min(s.runEarned, next))}</b> / {fmt(next)}
-              </span>
-            </div>
-          </>
-        ) : (
-          <div class="goal">
-            <span>{chText?.goal ?? 'Свари Философский камень'}</span>
+      {challenge ? (
+        <RiftHeader />
+      ) : (
+        <button
+          class="chapter"
+          onClick={() =>
+            chText &&
+            st.toast({
+              icon: 'book',
+              title: `Глава ${s.chapter}. ${chText.title}`,
+              text: next ? `${chText.goal}. Следующая глава — когда за забег заработаешь ${fmt(next)} золота` : chText.goal,
+              kind: 'info',
+            })
+          }
+        >
+          <div class="top">
+            <span class="label">Глава {s.chapter}</span>
+            <span class="ttl">{chText?.title}</span>
           </div>
-        )}
-      </button>
+          {next ? (
+            <>
+              <Bar value={chProgress} />
+              <div class="goal">
+                <span>Заработай за забег</span>
+                <span class="num">
+                  <b>{fmt(Math.min(s.runEarned, next))}</b> / {fmt(next)}
+                </span>
+              </div>
+            </>
+          ) : (
+            <div class="goal">
+              <span>{chText?.goal ?? 'Свари Философский камень'}</span>
+            </div>
+          )}
+        </button>
+      )}
 
       <ExpeditionStrip />
 
-      {(challenge || buffs.length > 0) && (
+      {buffs.length > 0 && (
         <div class="buffs">
-          {challenge && (
-            <span class="buff">
-              <Ic id={challenge.icon} />
-              <span class="num">{fmt(s.runEarned)}</span>
-              <span class="tm">/ {fmt(challengeGoal(challenge, s.challengeDone[challenge.id] ?? 0))}</span>
-            </span>
-          )}
           {buffs.map((k) => {
             const v = BUFF_VIEW[k];
             const b = s.buffs[k]!;
@@ -312,6 +367,7 @@ export function ShopTab() {
             <Px id="spark" scale={3} />
           </button>
         )}
+        <Visitor />
         <div class="cat">
           <div class="cat-body" ref={catRef} onClick={petCat}>
             <Px id={catFace} scale={3} />

@@ -28,6 +28,34 @@ export interface Expedition {
   hasted?: boolean;
 }
 
+/** Снимок забега: им меняются основной мир и Изнанка (испытание). */
+export interface RunSnapshot {
+  gold: number;
+  runEarned: number;
+  generators: Record<GeneratorId, number>;
+  upgrades: string[];
+  buffs: Partial<Record<BuffKind, Buff>>;
+  heat: number;
+  runStart: number;
+  runTaps: number;
+  /** Когда мир оставили. */
+  at: number;
+}
+
+/** Вид сделки, которую предлагает гость (зависит от роли героя). */
+export type VisitKind = 'tap' | 'crit' | 'prod' | 'trade' | 'train' | 'haste';
+
+/** Герой гильдии зашёл в лавку. */
+export interface Visit {
+  hero: string;
+  kind: VisitKind;
+  arrived: number;
+  /** Когда уйдёт, если его не заметить. */
+  leaves: number;
+  /** Разговор уже начат — гость ждёт ответа на предложение и не уходит. */
+  talked?: boolean;
+}
+
 export interface Quest {
   kind: QuestKind;
   target: number;
@@ -77,6 +105,15 @@ export interface GameState {
 
   challenge: string | null;
   challengeDone: Record<string, number>;
+  /** Основной мир, сохранённый на время испытания в Изнанке. */
+  mainRun: RunSnapshot | null;
+  /** Прогресс испытаний, из которых вышли, не закончив. */
+  challengeRuns: Record<string, RunSnapshot>;
+
+  visit: Visit | null;
+  nextVisitAt: number;
+  /** Сколько разговоров из личной истории героя уже прочитано (0..3). */
+  heroTalks: Record<string, number>;
   goldRushReadyAt?: number;
 
   daily: {
@@ -103,6 +140,7 @@ export interface GameState {
     gensBought: number;
     heroLevels: number;
     upgradesBought: number;
+    visits: number;
     playSeconds: number;
     bestGps: number;
   };
@@ -154,6 +192,11 @@ export function newGame(now: number): GameState {
     nextWispAt: now + 45_000,
     challenge: null,
     challengeDone: {},
+    mainRun: null,
+    challengeRuns: {},
+    visit: null,
+    nextVisitAt: now + 3 * 60_000,
+    heroTalks: {},
     daily: {
       day: '',
       streak: 0,
@@ -176,6 +219,7 @@ export function newGame(now: number): GameState {
       gensBought: 0,
       heroLevels: 0,
       upgradesBought: 0,
+      visits: 0,
       playSeconds: 0,
       bestGps: 0,
     },
@@ -195,6 +239,8 @@ export function migrate(raw: unknown, now: number): GameState {
     ingredients: { ...base.ingredients, ...(s.ingredients ?? {}) },
     daily: { ...base.daily, ...(s.daily ?? {}) },
     stats: { ...base.stats, ...(s.stats ?? {}) },
+    heroTalks: { ...(s.heroTalks ?? {}) },
+    challengeRuns: { ...(s.challengeRuns ?? {}) },
     settings: { ...base.settings, ...(s.settings ?? {}) },
     version: SAVE_VERSION,
   };

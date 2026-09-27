@@ -3,6 +3,7 @@ import { migrate, newGame, type GameState } from '../core/state';
 import * as E from '../core/engine';
 import type { DialogueLine, IngredientId } from '../core/types';
 import { TEXTS } from '../data/texts';
+import { HERO_VISITS } from '../data/visits';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { CHALLENGE_BY_ID } from '../data/progression';
 import { setNotation } from './format';
@@ -13,11 +14,12 @@ const SAVE_KEY = 'alchemist-guild-save-v1';
 
 export type Modal =
   | { type: 'dialogue'; title?: string; lines: DialogueLine[]; onDone?: () => void }
-  | { type: 'offline'; report: E.OfflineReport }
+  | { type: 'offline'; report: E.OfflineReport; home?: boolean }
   | { type: 'loot'; loot: E.ExpeditionLoot; location: string; heroes: string[]; story: string }
   | { type: 'discover'; recipe: string }
   | { type: 'transmuted'; stones: number }
   | { type: 'challengeDone'; id: string }
+  | { type: 'visit' }
   | { type: 'cloudConflict'; progress: number; updatedAt: number; useCloud: () => void; keepLocal: () => void };
 
 export interface Toast {
@@ -221,6 +223,17 @@ class Store {
     if (ev.challengeDone) {
       sfx.fanfare();
       this.modals.push({ type: 'challengeDone', id: ev.challengeDone });
+      if (ev.homeReport) this.modals.push({ type: 'offline', report: ev.homeReport, home: true });
+    }
+    if (ev.visitArrived) {
+      sfx.soft();
+      const h = E.HERO_BY_ID[ev.visitArrived];
+      // На главном экране гостя и так видно; на других вкладках — подсказка
+      if (this.tab !== 'shop') this.toast({ icon: h.id, title: `${h.name} заглядывает в лавку`, text: 'Загляни в Лавку — у гостя есть предложение', kind: 'info' });
+    }
+    if (ev.visitLeft) {
+      const h = E.HERO_BY_ID[ev.visitLeft];
+      this.toast({ icon: h.id, title: h.name, text: 'Гость не дождался разговора и заглянет в другой раз', kind: 'info' });
     }
     if (now % 5000 < 100) this.dailyCheck(now);
     this.bump();
@@ -259,6 +272,54 @@ class Store {
     const m = this.modals.shift();
     if (m?.type === 'dialogue') m.onDone?.();
     this.save();
+    this.bump();
+  }
+
+  /** Тап по гостю: разговор (кусочек личной истории или приветствие), потом предложение. */
+  openVisit() {
+    const v = this.s.visit;
+    if (!v || this.modals.some((m) => m.type === 'visit')) return;
+    v.talked = true;
+    const h = E.HERO_BY_ID[v.hero];
+    const text = HERO_VISITS[v.hero];
+    const talks = this.s.heroTalks[v.hero] ?? 0;
+    haptic('light');
+    if (text && talks < text.arc.length) {
+      this.modals.push({
+        type: 'dialogue',
+        title: `${h.name} · ${talks + 1}/${text.arc.length}`,
+        lines: text.arc[talks],
+        onDone: () => {
+          this.s.heroTalks[v.hero] = Math.max(this.s.heroTalks[v.hero] ?? 0, talks + 1);
+          this.modals.push({ type: 'visit' });
+        },
+      });
+    } else this.modals.push({ type: 'visit' });
+    this.bump();
+  }
+
+  acceptVisit() {
+    const v = this.s.visit;
+    if (!v) return;
+    const r = E.acceptVisit(this.s, this.mods(), Date.now(), rng);
+    if (!r) {
+      sfx.error();
+      return;
+    }
+    sfx.buy();
+    haptic('medium');
+    const h = E.HERO_BY_ID[v.hero];
+    this.toast({ icon: h.id, title: h.name, text: HERO_VISITS[v.hero]?.accept ?? 'По рукам!', kind: 'gold' });
+    this.save();
+    this.bump();
+  }
+
+  declineVisit() {
+    const v = this.s.visit;
+    if (!v) return;
+    E.declineVisit(this.s, Date.now(), rng);
+    const h = E.HERO_BY_ID[v.hero];
+    this.toast({ icon: h.id, title: h.name, text: HERO_VISITS[v.hero]?.decline ?? 'Ничего, загляну ещё.', kind: 'info' });
     this.bump();
   }
 
@@ -377,13 +438,35 @@ class Store {
     this.bump();
     return g;
   }
+  /** Войти в Изнанку. Основной мир сохраняется; прогресс испытания — тоже, если в нём уже были. */
   startChallenge(id: string) {
+    const resumed = !!this.s.challengeRuns[id];
     const ok = E.startChallenge(this.s, id, Date.now());
     if (ok) {
       sfx.fanfare();
-      this.toast({ icon: CHALLENGE_BY_ID[id].icon, title: `Испытание: ${CHALLENGE_BY_ID[id].name}`, text: 'Удачи, алхимик!', kind: 'warn' });
+      haptic('heavy');
+      this.tab = 'shop';
+      this.toast({
+        icon: CHALLENGE_BY_ID[id].icon,
+        title: `Изнанка: ${CHALLENGE_BY_ID[id].name}`,
+        text: resumed ? 'Испытание продолжается с того же места' : 'Основной мир сохранён. Вернуться можно в любой момент',
+        kind: 'warn',
+      });
       this.save();
     }
+    this.bump();
+  }
+
+  /** Вернуться в основной мир: прогресс испытания сохраняется, дома начисляется доход за время отсутствия. */
+  leaveChallenge() {
+    const id = this.s.challenge;
+    if (!id) return;
+    const report = E.leaveChallenge(this.s, Date.now(), true);
+    sfx.soft();
+    haptic('medium');
+    if (report) this.modals.push({ type: 'offline', report, home: true });
+    else this.toast({ icon: 'hut', title: 'Снова дома', text: 'Испытание подождёт — прогресс сохранён', kind: 'info' });
+    this.save();
     this.bump();
   }
   do<T>(fn: (s: GameState, m: E.Mods, now: number, r: E.Rng) => T): T {

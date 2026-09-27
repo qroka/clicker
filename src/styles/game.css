@@ -1985,3 +1985,188 @@ textarea.code:focus {
 .haptic-check small {
   font-size: 12px;
 }
+
+/* ─── Визиты героев ─── */
+.visitor {
+  position: absolute;
+  right: 0;
+  bottom: 40px;
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  animation: visitor-in 0.5s ease-out;
+}
+.visitor .plate {
+  display: grid;
+  place-items: center;
+  width: 84px;
+  height: 84px;
+  border-radius: 16px;
+  background: var(--bg-2);
+  box-shadow:
+    0 8px 20px rgba(0, 0, 0, 0.45),
+    0 0 0 2px var(--gold-dim);
+}
+.visitor .bang {
+  position: absolute;
+  top: -10px;
+  right: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--gold);
+  color: var(--gold-ink);
+  font: 700 18px/1 var(--px);
+  box-shadow: 0 3px 0 var(--gold-edge);
+  animation: bang 1.2s ease-in-out infinite;
+  z-index: 1;
+}
+.visitor .who {
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(15, 12, 10, 0.85);
+  font: 600 12px var(--ui);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.visitor:active .plate {
+  transform: translateY(1px);
+}
+.visitor.leaving {
+  opacity: 0.55;
+  transition: opacity 1s;
+}
+@keyframes visitor-in {
+  from {
+    transform: translateX(40px);
+    opacity: 0;
+  }
+}
+@keyframes bang {
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.visit-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.visit-head .plate {
+  width: 88px;
+  height: 88px;
+  border-radius: 16px;
+  background: var(--bg-3);
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+.visit-head h2 {
+  margin-top: 4px;
+}
+.visit-say {
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.deal {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-inset);
+}
+.deal-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+.deal-row .k {
+  font-size: 13px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+.deal-row .v {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 14px var(--ui);
+  text-align: right;
+}
+
+/* ─── Изнанка (испытания): фиолетовое измерение ─── */
+:root.rift {
+  --bg-0: #0d0a14;
+  --bg-inset: #110d1a;
+  --bg-1: #16111f;
+  --bg-2: #1f1729;
+  --bg-3: #281e35;
+  --line: #3b2e4d;
+  --track: #0e0a15;
+  --text-2: #ab9cc0;
+  --text-3: #8b7da0;
+  --text-4: #6c5f80;
+  --gold-bg: #3a2447;
+}
+/* Сцена перекрашивается в фиолетовый: слой в режиме «цвет» сохраняет светотень пикселей */
+.sc-rift {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #6a3bb0;
+  mix-blend-mode: color;
+  opacity: 0.78;
+}
+.rift .sc-rift {
+  display: block;
+}
+.rift .scene::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(185, 140, 255, 0.12), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(120, 70, 220, 0.14), transparent 45%);
+  animation: rift-breathe 6s ease-in-out infinite;
+}
+@keyframes rift-breathe {
+  50% {
+    opacity: 0.5;
+  }
+}
+.rift-head .top {
+  align-items: center;
+}
+.rift-head .label {
+  color: #c3a6ff;
+}
+.rift-head .ttl {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.rift-head .home {
+  min-height: 0;
+  height: 36px;
+  padding: 0 12px;
+  font-size: 13px;
+  flex: none;
+}
+.rift-head .goal > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.link {
+  color: var(--gold);
+  text-decoration: underline;
+  cursor: pointer;
+}

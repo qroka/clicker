@@ -10,6 +10,108 @@ import { haptic, sfx } from './fx';
 import type { DialogueLine, IngredientId } from '../core/types';
 import { Ic, Px } from './Px';
 import { Cta } from './kit';
+import * as E from '../core/engine';
+import { HERO_VISITS } from '../data/visits';
+import { RARITY_LABEL } from './labels';
+
+/** Если гость предлагает ускорить экспедиции — общая реплика (у героев свои только для сделок роли). */
+const HASTE_LINE = 'Вижу, твои ребята в пути. Я знаю тропу покороче — сбегаю, подскажу им?';
+
+function dealText(o: E.VisitOffer, lvl: number): { get: string } {
+  switch (o.kind) {
+    case 'tap':
+      return { get: `Тапы ×${o.buff!.mult} на ${o.buff!.seconds} с` };
+    case 'crit':
+      return { get: `Шанс крита ×${o.buff!.mult} на ${o.buff!.seconds} с` };
+    case 'prod':
+      return { get: `Весь доход ×${o.buff!.mult} на ${o.buff!.seconds} с` };
+    case 'trade':
+      return { get: `+${fmt(o.essence!)} эссенции и ${o.ingredients} ингредиента` };
+    case 'train':
+      return { get: `Уровень героя ${lvl} → ${lvl + 1}` };
+    case 'haste':
+      return { get: 'Экспедиции в пути вернутся вдвое быстрее' };
+  }
+}
+
+function VisitView({ onClose }: { onClose: () => void }) {
+  const st = useStore();
+  const s = st.s;
+  const v = s.visit;
+  if (!v) return null;
+  const h = E.HERO_BY_ID[v.hero];
+  const text = HERO_VISITS[v.hero];
+  const m = st.mods();
+  const o = E.visitOffer(s, m, v);
+  const lvl = s.heroes[v.hero]?.level ?? 1;
+  const deal = dealText(o, lvl);
+  const talks = s.heroTalks[v.hero] ?? 0;
+  const greet = text && talks >= text.arc.length ? text.greet[v.arrived % text.greet.length] : null;
+  const line = o.kind === 'haste' ? HASTE_LINE : (text?.offer ?? h.quote);
+  const can = E.canAcceptVisit(s, m);
+  const price = o.cost.gold ? (
+    <>
+      <Px id="coin" scale={1} /> {fmt(o.cost.gold)}
+    </>
+  ) : o.cost.essence ? (
+    <>
+      <Ic id="essence" /> {fmt(o.cost.essence)}
+    </>
+  ) : null;
+  const lack = o.cost.gold && s.gold < o.cost.gold ? 'золота' : o.cost.essence && s.essence < o.cost.essence ? 'эссенции' : '';
+  // Гость, с которым уже поговорили, ждёт ответа — золото можно докопить
+  const gps = E.gps(s, m, Date.now());
+  const wait = lack === 'золота' && gps > 0 ? Math.ceil((o.cost.gold! - s.gold) / gps) : 0;
+  return (
+    <>
+      <div class="scrim" onClick={onClose} />
+      <div class="modal visit-modal" role="dialog">
+        <div class="visit-head">
+          <span class="plate">
+            <Px id={h.id} scale={3} />
+          </span>
+          <div>
+            <div class="label">
+              {RARITY_LABEL[h.rarity]} · {h.title}
+            </div>
+            <h2>{h.name}</h2>
+          </div>
+        </div>
+        {greet && <p class="visit-say">«{greet}»</p>}
+        <p class="visit-say">«{line}»</p>
+        <div class="deal">
+          <div class="deal-row">
+            <span class="k">Ты получишь</span>
+            <span class="v">{deal.get}</span>
+          </div>
+          <div class="deal-row">
+            <span class="k">Цена</span>
+            <span class="v">{price ?? <span class="plus">бесплатно</span>}</span>
+          </div>
+        </div>
+        <Cta
+          off={!can}
+          onClick={() => {
+            st.acceptVisit();
+            onClose();
+          }}
+        >
+          {can ? 'По рукам' : wait > 0 && wait < 3600 ? `Золото накопится через ${fmtTime(wait)}` : `Не хватает ${lack}`}
+        </Cta>
+        <button
+          class="btn2 block"
+          style={{ marginTop: 8 }}
+          onClick={() => {
+            st.declineVisit();
+            onClose();
+          }}
+        >
+          Не сейчас
+        </button>
+      </div>
+    </>
+  );
+}
 
 function Dialogue({ title, lines, onClose }: { title?: string; lines: DialogueLine[]; onClose: () => void }) {
   const [i, setI] = useState(0);
@@ -81,6 +183,7 @@ function IngList({ ings }: { ings: Partial<Record<IngredientId, number>> }) {
 }
 
 function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; onClose: () => void }) {
+  if (m.type === 'visit') return <VisitView onClose={onClose} />;
   let body;
   let cta = 'Отлично';
   switch (m.type) {
@@ -89,11 +192,11 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       body = (
         <>
           <div class="hero-art">
-            <Px id="moon" scale={4} />
+            <Px id={m.home ? 'hut' : 'moon'} scale={4} />
           </div>
-          <h2>С возвращением</h2>
+          <h2>{m.home ? 'Снова дома' : 'С возвращением'}</h2>
           <p>
-            Тебя не было {fmtTime(m.report.seconds)}
+            {m.home ? 'Лавка работала без тебя' : 'Тебя не было'} {fmtTime(m.report.seconds)}
             {m.report.cappedSeconds < m.report.seconds ? `, засчитано ${fmtTime(m.report.cappedSeconds)}` : ''}
           </p>
           <div class="reward">

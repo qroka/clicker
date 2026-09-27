@@ -7,6 +7,7 @@ import { EXPEDITION_DURATIONS, ING_BY_ID, LOCATIONS } from '../data/world';
 import { LOGIN_REWARDS, QUEST_TEMPLATES, QUEST_REWARD, QUESTS_ALL_BONUS } from '../data/progression';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { TEXTS } from '../data/texts';
+import { HERO_VISITS } from '../data/visits';
 import { fmt, fmtTime, pct, plural } from './format';
 import { RARITY_LABEL, ROLE_LABEL, bonusText } from './labels';
 import { Portrait } from './tabs/Guild';
@@ -205,6 +206,8 @@ function Daily() {
 
 // ─── Герой ───────────────────────────────────────────────────────────────────
 
+const TALK_NAMES = ['Знакомство', 'О доме', 'По душам'];
+
 function HeroView({ id }: { id: string }) {
   const st = useStore();
   const s = st.s;
@@ -297,6 +300,27 @@ function HeroView({ id }: { id: string }) {
           </div>
         )}
       </Section>
+
+      {rec && HERO_VISITS[id] && (
+        <Section title="Разговоры">
+          <div class="stack">
+            {HERO_VISITS[id].arc.map((talk, i) => {
+              const heard = i < (s.heroTalks[id] ?? 0);
+              const name = TALK_NAMES[i];
+              return (
+                <Row
+                  key={i}
+                  icon={<Px id={heard ? 'scroll' : 'lock'} scale={2} />}
+                  name={heard ? name : '???'}
+                  sub={heard ? 'Перечитать' : 'Откроется, когда герой заглянет в лавку'}
+                  locked={!heard}
+                  onClick={heard ? () => st.replayStory(`${h.name} · ${name}`, talk) : undefined}
+                />
+              );
+            })}
+          </div>
+        </Section>
+      )}
 
       <div style={{ marginTop: 24 }}>{cta}</div>
     </div>

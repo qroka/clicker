@@ -11,3 +11,8 @@ export const PALETTES: [string, string][] = [
 ];
 
 export const chapterPalette = (chapter: number) => PALETTES[Math.max(0, Math.min(PALETTES.length, chapter) - 1)];
+
+/** Изнанка (испытания): фиолетовое зелье и свечение. */
+export const RIFT_PALETTE: [string, string] = ['#b98cff', '#5a2d91'];
+
+export const worldPalette = (chapter: number, inRift: boolean) => (inRift ? RIFT_PALETTE : chapterPalette(chapter));

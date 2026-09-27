@@ -6,7 +6,7 @@ import { attachCanvas, attachFloatLayer, unlockAudio } from './fx';
 import { FEATURE_CHAPTER } from '../data/progression';
 import { HEROES } from '../data/heroes';
 import { Ic, Px } from './Px';
-import { chapterPalette } from './theme';
+import { worldPalette } from './theme';
 import { ShopTab } from './tabs/Shop';
 import { WorkshopTab } from './tabs/Workshop';
 import { GuildTab } from './tabs/Guild';
@@ -146,11 +146,16 @@ export function App() {
     return () => window.removeEventListener('pointerdown', unlock);
   }, []);
 
-  const [potion, glow] = chapterPalette(st.s.chapter);
+  const rift = !!st.s.challenge;
+  const [potion, glow] = worldPalette(st.s.chapter, rift);
   useEffect(() => {
     document.documentElement.style.setProperty('--potion', potion);
     document.documentElement.style.setProperty('--glow', glow);
   }, [potion, glow]);
+  // Изнанка: вся палитра интерфейса уходит в фиолетовый (токены переопределены в .rift)
+  useEffect(() => {
+    document.documentElement.classList.toggle('rift', rift);
+  }, [rift]);
 
   return (
     <div class="stage">
