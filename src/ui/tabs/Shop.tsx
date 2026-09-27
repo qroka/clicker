@@ -278,8 +278,16 @@ export function ShopTab() {
       <ExpeditionStrip />
 
       <div class="cauldron-zone" ref={zone}>
+        {/* Реплика кота и подсказка — над котлом, в потоке: зона прижата к низу, котёл не сдвигается */}
+        {tip && !st.modals.length && !st.toasts.length ? (
+          <div class="bubble" onClick={() => setTip(null)}>
+            <span class="who">Ртуть</span>
+            {tip}
+          </div>
+        ) : (
+          s.stats.taps < 15 && <div class="tap-hint">Стучи по котлу</div>
+        )}
         <Cauldron heat={s.heat} boiling={boiling} potion={potionColor} onTap={onTap} />
-        {s.stats.taps < 15 && !tip && <div class="tap-hint">Стучи по котлу</div>}
         {s.wisp && (
           <button
             class={`wisp ${s.wisp.expires - now < 3000 ? 'fading' : ''}`}
@@ -294,11 +302,6 @@ export function ShopTab() {
           <div class="cat-body" ref={catRef} onClick={petCat}>
             <Px id={catFace} scale={3} />
           </div>
-          {tip && !st.modals.length && !st.toasts.length && (
-            <div class="bubble" onClick={() => setTip(null)}>
-              {tip}
-            </div>
-          )}
         </div>
       </div>
     </div>
