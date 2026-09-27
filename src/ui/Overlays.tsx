@@ -17,20 +17,20 @@ import { RARITY_LABEL } from './labels';
 /** Если гость предлагает ускорить экспедиции — общая реплика (у героев свои только для сделок роли). */
 const HASTE_LINE = 'Вижу, твои ребята в пути. Я знаю тропу покороче — сбегаю, подскажу им?';
 
-function dealText(o: E.VisitOffer, lvl: number): { get: string; icon: string } {
+function dealText(o: E.VisitOffer, lvl: number): { get: string } {
   switch (o.kind) {
     case 'tap':
-      return { icon: 'fist', get: `Тапы ×${o.buff!.mult} на ${o.buff!.seconds} с` };
+      return { get: `Тапы ×${o.buff!.mult} на ${o.buff!.seconds} с` };
     case 'crit':
-      return { icon: 'target', get: `Шанс крита ×${o.buff!.mult} на ${o.buff!.seconds} с` };
+      return { get: `Шанс крита ×${o.buff!.mult} на ${o.buff!.seconds} с` };
     case 'prod':
-      return { icon: 'flask', get: `Весь доход ×${o.buff!.mult} на ${o.buff!.seconds} с` };
+      return { get: `Весь доход ×${o.buff!.mult} на ${o.buff!.seconds} с` };
     case 'trade':
-      return { icon: 'essence', get: `+${fmt(o.essence!)} эссенции и ${o.ingredients} ингредиента` };
+      return { get: `+${fmt(o.essence!)} эссенции и ${o.ingredients} ингредиента` };
     case 'train':
-      return { icon: 'cap', get: `Уровень героя ${lvl} → ${lvl + 1}` };
+      return { get: `Уровень героя ${lvl} → ${lvl + 1}` };
     case 'haste':
-      return { icon: 'compass', get: 'Экспедиции в пути вернутся вдвое быстрее' };
+      return { get: 'Экспедиции в пути вернутся вдвое быстрее' };
   }
 }
 
@@ -59,6 +59,9 @@ function VisitView({ onClose }: { onClose: () => void }) {
     </>
   ) : null;
   const lack = o.cost.gold && s.gold < o.cost.gold ? 'золота' : o.cost.essence && s.essence < o.cost.essence ? 'эссенции' : '';
+  // Гость, с которым уже поговорили, ждёт ответа — золото можно докопить
+  const gps = E.gps(s, m, Date.now());
+  const wait = lack === 'золота' && gps > 0 ? Math.ceil((o.cost.gold! - s.gold) / gps) : 0;
   return (
     <>
       <div class="scrim" onClick={onClose} />
@@ -79,9 +82,7 @@ function VisitView({ onClose }: { onClose: () => void }) {
         <div class="deal">
           <div class="deal-row">
             <span class="k">Ты получишь</span>
-            <span class="v">
-              <Ic id={deal.icon} /> {deal.get}
-            </span>
+            <span class="v">{deal.get}</span>
           </div>
           <div class="deal-row">
             <span class="k">Цена</span>
@@ -95,7 +96,7 @@ function VisitView({ onClose }: { onClose: () => void }) {
             onClose();
           }}
         >
-          {can ? 'По рукам' : `Не хватает ${lack}`}
+          {can ? 'По рукам' : wait > 0 && wait < 3600 ? `Золото накопится через ${fmtTime(wait)}` : `Не хватает ${lack}`}
         </Cta>
         <button
           class="btn2 block"

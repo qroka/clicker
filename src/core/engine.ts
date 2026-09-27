@@ -1150,7 +1150,7 @@ export function visitOffer(s: GameState, m: Mods, v: Visit): VisitOffer {
     case 'prod':
       return { kind: 'prod', cost: {}, buff: { kind: 'prodBoost', mult: 2, seconds: 90 } };
     case 'trade': {
-      const gold = Math.max(100, Math.round(baseGps(s, m) * 180));
+      const gold = Math.max(100, Math.round(baseGps(s, m) * 60));
       const essence = Math.round((10 + s.chapter * 4) * m.essence * 2);
       return { kind: 'trade', cost: { gold }, essence, ingredients: 3 };
     }
