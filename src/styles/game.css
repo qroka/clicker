@@ -1549,7 +1549,8 @@ button.lrow:active {
 .ach.off {
   opacity: 0.35;
 }
-textarea.code {
+textarea.code,
+input.code {
   width: 100%;
   min-height: 84px;
   border: 0;
@@ -1691,4 +1692,9 @@ textarea.code {
 .lrow .name {
   white-space: normal;
   overflow: visible;
+}
+input.code:focus,
+textarea.code:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 2px var(--gold);
 }
