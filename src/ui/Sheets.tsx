@@ -213,7 +213,7 @@ function HeroView({ id }: { id: string }) {
   const hs = s.heroes[id];
   if (!E.heroUnlocked(s, h)) {
     return (
-      <div class="empty">
+      <div class="empty-state">
         <Portrait h={h} locked size="lg" />
         <span>Этот гость появится в главе {h.chapter}</span>
       </div>
@@ -407,6 +407,8 @@ function Settings() {
   const [view, setView] = useState<'main' | 'ach' | 'save'>('main');
   const [code, setCode] = useState('');
   const [resetConfirm, setResetConfirm] = useState(0);
+  const [recovery, setRecovery] = useState<string | null>(null);
+  const [claimCode, setClaimCode] = useState('');
   const back = (
     <button class="btn2" style={{ marginBottom: 16 }} onClick={() => setView('main')}>
       <Ic id="arrow_left" /> Назад
@@ -457,8 +459,67 @@ function Settings() {
         >
           Сохранить в облако сейчас
         </button>
+
         <span class="label" style={{ marginTop: 16 }}>
-          Код прогресса
+          Код восстановления
+        </span>
+        {recovery ? (
+          <div class="lrow" style={{ justifyContent: 'space-between' }}>
+            <span class="num gold" style={{ fontSize: 22, letterSpacing: 1 }}>
+              {recovery}
+            </span>
+            <button
+              class="btn2"
+              onClick={() => {
+                void navigator.clipboard?.writeText(recovery);
+                st.toast({ icon: 'copy', title: 'Код скопирован', text: 'Сохрани его в Заметки', kind: 'info' });
+              }}
+            >
+              <Ic id="copy" /> Копировать
+            </button>
+          </div>
+        ) : (
+          <button
+            class="btn2 block"
+            onClick={async () => {
+              const c = await st.cloud?.getRecoveryCode();
+              if (c) setRecovery(c);
+              else st.toast({ icon: 'warning', title: 'Нет связи с облаком', text: 'Попробуй позже', kind: 'warn' });
+            }}
+          >
+            <Ic id="shard" /> Показать мой код
+          </button>
+        )}
+        <p class="hint">С этим кодом прогресс вернётся после переустановки или на новом телефоне</p>
+        <input
+          class="code"
+          style={{ minHeight: 0, height: 48, fontFamily: 'var(--px)', fontSize: 18, letterSpacing: 1, textTransform: 'uppercase' }}
+          placeholder="XXXX-XXXX-XXXX"
+          autocapitalize="characters"
+          autocomplete="off"
+          spellcheck={false}
+          value={claimCode}
+          onInput={(e) => setClaimCode((e.currentTarget as HTMLInputElement).value)}
+        />
+        <button
+          class={`btn2 block ${claimCode.replace(/[^A-Za-z0-9]/g, '').length === 12 ? '' : 'off'}`}
+          onClick={async () => {
+            if (claimCode.replace(/[^A-Za-z0-9]/g, '').length !== 12) return;
+            if (!confirm('Прогресс на этом устройстве заменится прогрессом из облака. Продолжить?')) return;
+            const r = await st.cloud?.claimRecoveryCode(claimCode);
+            if (r === 'ok') {
+              setClaimCode('');
+              setRecovery(null);
+              st.toast({ icon: 'check', title: 'Прогресс восстановлен', kind: 'gold' });
+            } else if (r === 'invalid') st.toast({ icon: 'warning', title: 'Код не найден', text: 'Проверь буквы и цифры', kind: 'warn' });
+            else st.toast({ icon: 'warning', title: 'Нет связи с облаком', text: 'Попробуй позже', kind: 'warn' });
+          }}
+        >
+          Восстановить по коду
+        </button>
+
+        <span class="label" style={{ marginTop: 16 }}>
+          Код прогресса (без облака)
         </span>
         <textarea class="code" readOnly value={st.exportSave()} onFocus={(e) => (e.currentTarget as HTMLTextAreaElement).select()} />
         <button
@@ -563,7 +624,7 @@ function Settings() {
           }
           onClick={() => setView('save')}
         />
-        <Row icon={<Px id="scroll" scale={2} />} name="Перечитать историю" onClick={() => st.modals.push({ type: 'dialogue', title: 'Пролог', lines: TEXTS.prologue }) && st.bump()} />
+        <Row icon={<Px id="scroll" scale={2} />} name="История" count={`${Math.min(s.chapter, TEXTS.chapters.length)}/${TEXTS.chapters.length}`} onClick={() => st.openSheet('story')} />
       </div>
 
       <Section title="Статистика">
@@ -596,6 +657,38 @@ function Settings() {
   );
 }
 
+/** Все открытые главы можно перечитать: пролог, вступления глав, эпилог. */
+function StorySheet() {
+  const st = useStore();
+  const s = st.s;
+  return (
+    <div class="stack">
+      <Row icon={<Px id="scroll" scale={2} />} name="Пролог" sub="Как ты попал в лавку" onClick={() => st.replayStory('Пролог', TEXTS.prologue)} />
+      {TEXTS.chapters.map((ch, i) => {
+        const open = i < s.chapter;
+        return (
+          <Row
+            key={i}
+            icon={<Px id={open ? 'book' : 'lock'} scale={2} />}
+            name={open ? ch.title : '???'}
+            count={`Глава ${i + 1}`}
+            sub={open ? ch.goal : 'Откроется по ходу игры'}
+            locked={!open}
+            onClick={open ? () => st.replayStory(`Глава ${i + 1}. ${ch.title}`, ch.intro) : undefined}
+          />
+        );
+      })}
+      <Row
+        icon={<Px id={s.finalDone ? 'stone' : 'lock'} scale={2} />}
+        name={s.finalDone ? 'Эпилог' : '???'}
+        sub={s.finalDone ? 'Философский камень' : 'Свари Философский камень'}
+        locked={!s.finalDone}
+        onClick={s.finalDone ? () => st.replayStory('Эпилог', TEXTS.epilogue) : undefined}
+      />
+    </div>
+  );
+}
+
 export function Sheets() {
   const st = useStore();
   const sh = st.sheet;
@@ -611,6 +704,12 @@ export function Sheets() {
     return (
       <Sheet title="Меню" onClose={close}>
         <Settings />
+      </Sheet>
+    );
+  if (sh === 'story')
+    return (
+      <Sheet title="История" onClose={close}>
+        <StorySheet />
       </Sheet>
     );
   if ('hero' in sh)

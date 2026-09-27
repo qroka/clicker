@@ -14,7 +14,7 @@ const SAVE_KEY = 'alchemist-guild-save-v1';
 export type Modal =
   | { type: 'dialogue'; title?: string; lines: DialogueLine[]; onDone?: () => void }
   | { type: 'offline'; report: E.OfflineReport }
-  | { type: 'loot'; loot: E.ExpeditionLoot; location: string; heroes: string[] }
+  | { type: 'loot'; loot: E.ExpeditionLoot; location: string; heroes: string[]; story: string }
   | { type: 'discover'; recipe: string }
   | { type: 'transmuted'; stones: number }
   | { type: 'challengeDone'; id: string }
@@ -29,7 +29,7 @@ export interface Toast {
 }
 
 export type Tab = 'shop' | 'workshop' | 'guild' | 'lab' | 'knowledge';
-export type Sheet = null | 'daily' | 'settings' | 'achievements' | { hero: string } | { expedition: true };
+export type Sheet = null | 'daily' | 'settings' | 'achievements' | 'story' | { hero: string } | { expedition: true };
 
 const rng: E.Rng = Math.random;
 
@@ -47,6 +47,8 @@ class Store {
   modals: Modal[] = [];
   toasts: Toast[] = [];
   tab: Tab = 'shop';
+  /** Открытая вкладка внутри Гильдии (с главного экрана можно прыгнуть сразу к экспедициям). */
+  guildView: 'heroes' | 'exp' = 'heroes';
   sheet: Sheet = null;
   cloudStatus: CloudStatus = 'off';
   cloudAt = 0;
@@ -224,14 +226,32 @@ class Store {
     this.bump();
   }
 
+  private queuedChapters = new Set<number>();
+
+  /** Ставит в очередь непрочитанные главы. Глава считается прочитанной только после закрытия
+   *  диалога — если выйти из игры раньше, она покажется при следующем запуске. */
   queueChapterStories() {
-    while (this.s.seenChapter < this.s.chapter) {
-      const idx = this.s.seenChapter; // 0-based индекс главы
+    for (let idx = this.s.seenChapter; idx < this.s.chapter; idx++) {
       const ch = TEXTS.chapters[idx];
-      this.s.seenChapter++;
-      if (!ch) continue;
-      this.modals.push({ type: 'dialogue', title: `Глава ${idx + 1}. ${ch.title}`, lines: ch.intro });
+      if (!ch || this.queuedChapters.has(idx)) continue;
+      this.queuedChapters.add(idx);
+      this.modals.push({
+        type: 'dialogue',
+        title: `Глава ${idx + 1}. ${ch.title}`,
+        lines: ch.intro,
+        onDone: () => {
+          this.s.seenChapter = Math.max(this.s.seenChapter, idx + 1);
+          this.queuedChapters.delete(idx);
+        },
+      });
     }
+  }
+
+  /** Перечитать сюжетный диалог (из раздела «История»). */
+  replayStory(title: string, lines: DialogueLine[]) {
+    this.sheet = null;
+    this.modals.unshift({ type: 'dialogue', title, lines });
+    this.bump();
   }
 
   // ─── Модалки и тосты ──
@@ -317,7 +337,12 @@ class Store {
     if (loot && e) {
       loot.success ? sfx.fanfare() : sfx.soft();
       haptic('medium');
-      this.modals.push({ type: 'loot', loot, location: e.location, heroes: e.heroes });
+      const pool = loot.success ? TEXTS.expeditionStories.success : TEXTS.expeditionStories.fail;
+      const hero = E.HERO_BY_ID[e.heroes[0]]?.name ?? 'Отряд';
+      const place = TEXTS.locations[e.location]?.name ?? '';
+      // История выбирается один раз — иначе текст менялся бы при каждой перерисовке
+      const story = pool[Math.floor(Math.random() * pool.length)].replaceAll('{hero}', hero).replaceAll('{place}', place);
+      this.modals.push({ type: 'loot', loot, location: e.location, heroes: e.heroes, story });
     }
     this.bump();
   }

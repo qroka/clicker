@@ -1,8 +1,5 @@
 import { render } from 'preact';
 import { App } from './ui/App';
-import '@fontsource/pixelify-sans/400.css';
-import '@fontsource/pixelify-sans/600.css';
-import '@fontsource/pixelify-sans/700.css';
 import '@fontsource/onest/400.css';
 import '@fontsource/onest/500.css';
 import '@fontsource/onest/600.css';

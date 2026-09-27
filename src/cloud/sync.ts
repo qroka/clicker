@@ -116,3 +116,47 @@ export async function deleteCloudAccount(): Promise<boolean> {
     return false;
   }
 }
+
+/** Код восстановления текущего игрока (создаётся при первом запросе). */
+export async function getRecoveryCode(): Promise<string | null> {
+  try {
+    const sb = await getClient();
+    if (!userId) userId = await ensureUser(sb);
+    const { data, error } = await sb.rpc('create_recovery_code');
+    if (error) throw error;
+    return typeof data === 'string' ? data : null;
+  } catch {
+    return null;
+  }
+}
+
+export type ClaimResult = 'ok' | 'invalid' | 'empty' | 'error';
+
+/** Восстановить прогресс по коду: сейв переносится к этой установке и применяется. */
+export async function claimRecoveryCode(code: string): Promise<ClaimResult> {
+  const norm = normalizeRecoveryCode(code);
+  if (!norm) return 'invalid';
+  try {
+    const sb = await getClient();
+    if (!userId) userId = await ensureUser(sb);
+    paused = true;
+    const { data, error } = await sb.rpc('claim_recovery_code', { p_code: norm });
+    if (error) throw error;
+    if (data === null || data === undefined) return 'invalid';
+    hooks?.applyCloud(data);
+    lastPushed = JSON.stringify(data);
+    hooks?.onStatus('synced', Date.now());
+    return 'ok';
+  } catch {
+    return 'error';
+  } finally {
+    paused = false;
+  }
+}
+
+/** XXXX-XXXX-XXXX из любого ввода (регистр, пробелы, дефисы); null — если длина не та. */
+export function normalizeRecoveryCode(input: string): string | null {
+  const raw = input.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (raw.length !== 12) return null;
+  return `${raw.slice(0, 4)}-${raw.slice(4, 8)}-${raw.slice(8, 12)}`;
+}

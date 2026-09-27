@@ -1,4 +1,3 @@
-import { useState } from 'preact/hooks';
 import { useStore } from '../store';
 import * as E from '../../core/engine';
 import { HEROES } from '../../data/heroes';
@@ -6,6 +5,7 @@ import { LOC_BY_ID } from '../../data/world';
 import { TEXTS } from '../../data/texts';
 import { fmt, fmtTime } from '../format';
 import type { HeroDef } from '../../core/types';
+import type { Expedition } from '../../core/state';
 import { Px } from '../Px';
 import { Glyph, Row, ScreenTitle, Section, StateBox } from '../kit';
 
@@ -70,6 +70,13 @@ function Heroes() {
   );
 }
 
+/** Фраза «что делает отряд»: выбирается по uid экспедиции, поэтому не прыгает между перерисовками. */
+export function expeditionLine(e: Expedition): string {
+  const pool = TEXTS.expeditionOnTheWay;
+  const hero = E.HERO_BY_ID[e.heroes[0]]?.name ?? 'Отряд';
+  return pool[Math.abs(e.uid) % pool.length].replaceAll('{hero}', hero);
+}
+
 function Expeditions() {
   const st = useStore();
   const s = st.s;
@@ -87,6 +94,7 @@ function Expeditions() {
             icon={<Px id={LOC_BY_ID[e.location].id} scale={2} />}
             name={TEXTS.locations[e.location].name}
             count={ready ? <span class="plus">вернулись</span> : fmtTime(left)}
+            sub={ready ? 'Нажми, чтобы забрать добычу' : expeditionLine(e)}
             progress={{ value: Math.min(1, (now - e.start) / (e.end - e.start)), full: ready }}
             claim={ready}
             right={<StateBox state={ready ? 'claim' : 'todo'} />}
@@ -110,7 +118,11 @@ function Expeditions() {
 
 export function GuildTab() {
   const st = useStore();
-  const [sub, setSub] = useState<'heroes' | 'exp'>('heroes');
+  const sub = st.guildView;
+  const setSub = (v: 'heroes' | 'exp') => {
+    st.guildView = v;
+    st.bump();
+  };
   const ready = st.s.expeditions.filter((e) => e.end <= Date.now()).length;
   return (
     <div>

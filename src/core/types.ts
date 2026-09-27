@@ -148,6 +148,8 @@ export interface GameTexts {
   catTips: string[];
   weeklyEvents: [EventText, EventText, EventText, EventText, EventText, EventText, EventText];
   expeditionStories: { success: string[]; fail: string[] };
+  /** Что отряд делает в пути: одна фраза на экспедицию, выбирается по uid и не меняется. */
+  expeditionOnTheWay: string[];
   transmutation: { title: string; lines: DialogueLine[] };
 }
 

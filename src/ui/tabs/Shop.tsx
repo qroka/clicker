@@ -10,6 +10,82 @@ import type { BuffKind } from '../../core/state';
 import { Ic, Px } from '../Px';
 import { chapterPalette } from '../theme';
 import { Bar } from '../kit';
+import { HEROES } from '../../data/heroes';
+import { LOC_BY_ID } from '../../data/world';
+import { spriteUrl } from '../Px';
+import { SPRITES } from '../../art';
+
+/** Ночная лавка за котлом: стена из досок, окно с луной, полки со склянками, пол. */
+function ShopScene() {
+  const S = Math.max(2, Math.min(4, Math.floor(Math.min(window.innerWidth, 560) / 134)));
+  const bg = (id: string) => {
+    const d = SPRITES[id];
+    return { backgroundImage: `url(${spriteUrl(id)})`, backgroundSize: `${d.w * S}px ${d.h * S}px` };
+  };
+  const img = (id: string, cls: string) => {
+    const d = SPRITES[id];
+    return <img class={`px ${cls}`} src={spriteUrl(id) ?? ''} width={d.w * S} height={d.h * S} alt="" draggable={false} />;
+  };
+  return (
+    <div class="scene" aria-hidden="true" style={bg('bg_wall')}>
+      {img('bg_window', 'sc-window')}
+      {img('bg_shelf', 'sc-shelf')}
+      {img('bg_shelf2', 'sc-shelf2')}
+      <div class="sc-floor" style={{ ...bg('bg_floor'), '--fill': `url(${spriteUrl('bg_floor_fill')})`, '--fs': `${32 * S}px ${11 * S}px`, '--fh': `${16 * S}px` }} />
+      <div class="sc-shade" />
+    </div>
+  );
+}
+
+/** Экспедиции на главном экране: видно, кто в пути и кто уже вернулся. */
+function ExpeditionStrip() {
+  const st = useStore();
+  const s = st.s;
+  const now = Date.now();
+  const slots = E.expeditionSlots(s);
+  if (!slots) return null;
+  const free = slots - s.expeditions.length;
+  const anyIdle = HEROES.some((h) => s.heroes[h.id]?.recruited && !s.expeditions.some((e) => e.heroes.includes(h.id)));
+  const toGuild = () => {
+    st.guildView = 'exp';
+    st.setTab('guild');
+  };
+  const showAdd = free > 0 && anyIdle;
+  const n = s.expeditions.length + (showAdd ? 1 : 0);
+  if (!n) return null;
+  const ic = n >= 3 ? 1 : 2;
+  return (
+    <div class={`exp-strip n${n}`}>
+      {s.expeditions.map((e) => {
+        const left = (e.end - now) / 1000;
+        const ready = left <= 0;
+        return (
+          <button key={e.uid} class={`exp-chip ${ready ? 'ready' : ''}`} onClick={() => (ready ? st.collectExpedition(e.uid) : toGuild())}>
+            <span class="ico">
+              <Px id={LOC_BY_ID[e.location].id} scale={ic} />
+            </span>
+            <span class="txt">
+              <b>{ready ? (n >= 3 ? 'Забрать' : 'Вернулись!') : fmtTime(left)}</b>
+              <small>{ready ? 'Забрать добычу' : TEXTS.locations[e.location].name}</small>
+            </span>
+            {!ready && <i class="prog" style={{ width: `${Math.min(100, ((now - e.start) / (e.end - e.start)) * 100)}%` }} />}
+          </button>
+        );
+      })}
+      {showAdd && (
+        <button class="exp-chip add" onClick={() => st.openSheet({ expedition: true })}>
+          <span class="ico">
+            <Px id="compass" scale={ic} />
+          </span>
+          <span class="txt">
+            <b>{n >= 3 ? 'В путь' : 'Отправить'}</b>
+            <small>{free === 1 ? 'Свободный слот' : `Слотов: ${free}`}</small>
+          </span>
+        </button>
+      )}
+    </div>
+  );
+}
 
 const BUFF_VIEW: Record<BuffKind, { icon: string; label: string }> = {
   boil: { icon: 'boil', label: 'тап' },
@@ -163,6 +239,7 @@ export function ShopTab() {
 
   return (
     <div class="shop">
+      <ShopScene />
       <button
         class="chapter"
         onClick={() => chText && st.toast({ icon: 'book', title: `Глава ${s.chapter}. ${chText.title}`, text: next ? chText.goal : 'Свари Философский камень', kind: 'info' })}
@@ -197,6 +274,8 @@ export function ShopTab() {
           })}
         </div>
       )}
+
+      <ExpeditionStrip />
 
       <div class="cauldron-zone" ref={zone}>
         <Cauldron heat={s.heat} boiling={boiling} potion={potionColor} onTap={onTap} />

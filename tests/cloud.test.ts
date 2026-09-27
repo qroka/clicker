@@ -20,3 +20,18 @@ describe('выбор между локальным и облачным сейв�
     expect(resolveSave({ progress: 1000_500, updatedAt: T + 60_000 }, { progress: 1000_000, updatedAt: T })).toBe('push-local');
   });
 });
+
+import { normalizeRecoveryCode } from '../src/cloud/sync';
+
+describe('код восстановления', () => {
+  it('нормализует ввод в XXXX-XXXX-XXXX', () => {
+    expect(normalizeRecoveryCode('abcd-efgh-jk23')).toBe('ABCD-EFGH-JK23');
+    expect(normalizeRecoveryCode(' ab cd ef gh jk 23 ')).toBe('ABCD-EFGH-JK23');
+    expect(normalizeRecoveryCode('ABCDEFGHJK23')).toBe('ABCD-EFGH-JK23');
+  });
+  it('отклоняет неверную длину', () => {
+    expect(normalizeRecoveryCode('ABCD-EFGH')).toBeNull();
+    expect(normalizeRecoveryCode('')).toBeNull();
+    expect(normalizeRecoveryCode('ABCD-EFGH-JK23-X')).toBeNull();
+  });
+});
