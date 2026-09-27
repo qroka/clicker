@@ -28,6 +28,20 @@ export interface Expedition {
   hasted?: boolean;
 }
 
+/** Снимок забега: им меняются основной мир и Изнанка (испытание). */
+export interface RunSnapshot {
+  gold: number;
+  runEarned: number;
+  generators: Record<GeneratorId, number>;
+  upgrades: string[];
+  buffs: Partial<Record<BuffKind, Buff>>;
+  heat: number;
+  runStart: number;
+  runTaps: number;
+  /** Когда мир оставили. */
+  at: number;
+}
+
 /** Вид сделки, которую предлагает гость (зависит от роли героя). */
 export type VisitKind = 'tap' | 'crit' | 'prod' | 'trade' | 'train' | 'haste';
 
@@ -91,6 +105,10 @@ export interface GameState {
 
   challenge: string | null;
   challengeDone: Record<string, number>;
+  /** Основной мир, сохранённый на время испытания в Изнанке. */
+  mainRun: RunSnapshot | null;
+  /** Прогресс испытаний, из которых вышли, не закончив. */
+  challengeRuns: Record<string, RunSnapshot>;
 
   visit: Visit | null;
   nextVisitAt: number;
@@ -174,6 +192,8 @@ export function newGame(now: number): GameState {
     nextWispAt: now + 45_000,
     challenge: null,
     challengeDone: {},
+    mainRun: null,
+    challengeRuns: {},
     visit: null,
     nextVisitAt: now + 3 * 60_000,
     heroTalks: {},
@@ -220,6 +240,7 @@ export function migrate(raw: unknown, now: number): GameState {
     daily: { ...base.daily, ...(s.daily ?? {}) },
     stats: { ...base.stats, ...(s.stats ?? {}) },
     heroTalks: { ...(s.heroTalks ?? {}) },
+    challengeRuns: { ...(s.challengeRuns ?? {}) },
     settings: { ...base.settings, ...(s.settings ?? {}) },
     version: SAVE_VERSION,
   };

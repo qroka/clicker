@@ -191,11 +191,11 @@ function ModalView({ m, onClose }: { m: Exclude<Modal, { type: 'dialogue' }>; on
       body = (
         <>
           <div class="hero-art">
-            <Px id="moon" scale={4} />
+            <Px id={m.home ? 'hut' : 'moon'} scale={4} />
           </div>
-          <h2>С возвращением</h2>
+          <h2>{m.home ? 'Снова дома' : 'С возвращением'}</h2>
           <p>
-            Тебя не было {fmtTime(m.report.seconds)}
+            {m.home ? 'Лавка работала без тебя' : 'Тебя не было'} {fmtTime(m.report.seconds)}
             {m.report.cappedSeconds < m.report.seconds ? `, засчитано ${fmtTime(m.report.cappedSeconds)}` : ''}
           </p>
           <div class="reward">

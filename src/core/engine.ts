@@ -1,7 +1,7 @@
 // Игровой движок: чистые функции над GameState. Никакого DOM — используется и в UI, и в симуляции баланса.
 
 import type { BonusType, GeneratorId, HeroDef, IngredientId, LocationId, Rarity } from './types';
-import type { BuffKind, Expedition, GameState, Quest, Visit, VisitKind } from './state';
+import type { BuffKind, Expedition, GameState, Quest, RunSnapshot, Visit, VisitKind } from './state';
 import { newGame } from './state';
 import { EXPEDITION_DURATIONS, FINAL_RECIPE, GENERATORS, GEN_BY_ID, ING_BY_ID, LOCATIONS, LOC_BY_ID, RECIPES } from '../data/world';
 import {
@@ -382,7 +382,8 @@ export function tap(s: GameState, m: Mods, now: number, rng: Rng): TapResult {
 export function earn(s: GameState, amount: number): void {
   s.gold += amount;
   s.runEarned += amount;
-  s.allTimeEarned += amount;
+  // Золото Изнанки не идёт в «за всё время»: испытание не влияет на камни основного мира
+  if (!s.challenge) s.allTimeEarned += amount;
   questProgress(s, 'earn', amount);
 }
 
@@ -393,6 +394,8 @@ export interface TickEvents {
   achievements: string[];
   expeditionsDone: number;
   challengeDone?: string;
+  /** Возвращение домой после пройденного испытания: доход основного мира за время отсутствия. */
+  homeReport?: OfflineReport | null;
   /** Герой зашёл в лавку. */
   visitArrived?: string;
   /** Герой ушёл, так и не дождавшись разговора. */
@@ -435,7 +438,7 @@ export function tick(s: GameState, now: number, rng: Rng): TickEvents {
     if (c && s.runEarned >= challengeGoal(c, s.challengeDone[c.id] ?? 0)) {
       s.challengeDone[c.id] = (s.challengeDone[c.id] ?? 0) + 1;
       ev.challengeDone = c.id;
-      s.challenge = null;
+      ev.homeReport = leaveChallenge(s, now, false);
     }
   }
   return ev;
@@ -448,6 +451,7 @@ export function scheduleWisp(s: GameState, m: Mods, now: number, rng: Rng): void
 }
 
 export function checkChapter(s: GameState): number | undefined {
+  if (s.challenge) return undefined; // в Изнанке главы не двигаются
   let up: number | undefined;
   while (s.chapter < CHAPTER_THRESHOLDS.length && s.runEarned >= CHAPTER_THRESHOLDS[s.chapter]) {
     s.chapter++;
@@ -801,7 +805,7 @@ export function goldForNextStone(s: GameState): number {
 }
 
 export function canTransmute(s: GameState): boolean {
-  return s.chapter >= FEATURE_CHAPTER.transmutation && pendingStones(s) >= 1;
+  return !s.challenge && s.chapter >= FEATURE_CHAPTER.transmutation && pendingStones(s) >= 1;
 }
 
 export function transmute(s: GameState, now: number, force = false): number {
@@ -827,19 +831,86 @@ function resetRun(s: GameState, now: number) {
   s.challenge = null;
 }
 
-export function startChallenge(s: GameState, id: string, now: number): boolean {
+// ─── Испытания: Изнанка ──────────────────────────────────────────────────────
+// Испытание идёт в отдельном измерении. Вход сохраняет основной мир целиком, выход
+// возвращает его вместе с доходом за время отсутствия (по правилам офлайна).
+// Прогресс незаконченного испытания тоже сохраняется — к нему можно вернуться.
+
+function snapshotRun(s: GameState, now: number): RunSnapshot {
+  return {
+    gold: s.gold,
+    runEarned: s.runEarned,
+    generators: { ...s.generators },
+    upgrades: [...s.upgrades],
+    buffs: { ...s.buffs },
+    heat: s.heat,
+    runStart: s.runStart,
+    runTaps: s.stats.runTaps,
+    at: now,
+  };
+}
+
+function restoreRun(s: GameState, r: RunSnapshot) {
+  s.gold = r.gold;
+  s.runEarned = r.runEarned;
+  s.generators = { ...newGame(0).generators, ...r.generators };
+  s.upgrades = [...r.upgrades];
+  s.buffs = { ...r.buffs };
+  s.heat = r.heat;
+  s.runStart = r.runStart;
+  s.stats.runTaps = r.runTaps;
+}
+
+export function canStartChallenge(s: GameState, id: string): boolean {
   const c = CHALLENGE_BY_ID[id];
-  if (!c || s.transmutations < 1 || (s.challengeDone[id] ?? 0) >= CHALLENGE_MAX) return false;
-  transmute(s, now, true);
+  return !!c && !s.challenge && s.transmutations >= 1 && (s.challengeDone[id] ?? 0) < CHALLENGE_MAX;
+}
+
+/** Войти в Изнанку: основной мир сохраняется, испытание продолжается с сохранённого места или с нуля. */
+export function startChallenge(s: GameState, id: string, now: number): boolean {
+  if (!canStartChallenge(s, id)) return false;
+  s.mainRun = snapshotRun(s, now);
+  const saved = s.challengeRuns[id];
+  if (saved) {
+    restoreRun(s, saved);
+    delete s.challengeRuns[id];
+  } else {
+    resetRun(s, now);
+  }
   s.challenge = id;
+  s.lastTick = now;
+  s.wisp = null;
+  s.nextWispAt = now + 20_000;
+  s.visit = null;
   return true;
 }
 
-export function abandonChallenge(s: GameState): void {
+/**
+ * Вернуться домой. keepProgress — сохранить прогресс испытания, чтобы продолжить позже.
+ * Возвращает доход основного мира за время, пока игрок был в Изнанке.
+ */
+export function leaveChallenge(s: GameState, now: number, keepProgress = true): OfflineReport | null {
+  const id = s.challenge;
+  if (!id) return null;
+  if (keepProgress) s.challengeRuns[id] = snapshotRun(s, now);
+  else delete s.challengeRuns[id];
   s.challenge = null;
+  const main = s.mainRun;
+  s.mainRun = null;
+  // Сейв старой версии: испытание начиналось трансмутацией, основного мира нет — остаёмся в текущем забеге
+  if (!main) return null;
+  restoreRun(s, main);
+  s.lastTick = main.at;
+  s.wisp = null;
+  const report = applyOffline(s, now);
+  s.lastTick = now;
+  return report;
 }
 
-// ─── Древо знаний ────────────────────────────────────────────────────────────
+/** Бросить сохранённый прогресс испытания (вне Изнанки). */
+export function resetChallengeProgress(s: GameState, id: string): void {
+  delete s.challengeRuns[id];
+}
 
 export function talentCost(id: string, level: number): number {
   const t = TALENT_BY_ID[id];
@@ -1058,7 +1129,7 @@ function tickVisit(s: GameState, now: number, rng: Rng): { arrived?: string; lef
     }
     return null;
   }
-  if (now < s.nextVisitAt || s.chapter < FEATURE_CHAPTER.guild || isRule(s, 'noBuffs')) return null;
+  if (now < s.nextVisitAt || s.chapter < FEATURE_CHAPTER.guild || s.challenge) return null;
   const h = pickVisitor(s, rng);
   if (!h) {
     scheduleVisit(s, now, rng);

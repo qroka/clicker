@@ -14,7 +14,7 @@ const SAVE_KEY = 'alchemist-guild-save-v1';
 
 export type Modal =
   | { type: 'dialogue'; title?: string; lines: DialogueLine[]; onDone?: () => void }
-  | { type: 'offline'; report: E.OfflineReport }
+  | { type: 'offline'; report: E.OfflineReport; home?: boolean }
   | { type: 'loot'; loot: E.ExpeditionLoot; location: string; heroes: string[]; story: string }
   | { type: 'discover'; recipe: string }
   | { type: 'transmuted'; stones: number }
@@ -223,6 +223,7 @@ class Store {
     if (ev.challengeDone) {
       sfx.fanfare();
       this.modals.push({ type: 'challengeDone', id: ev.challengeDone });
+      if (ev.homeReport) this.modals.push({ type: 'offline', report: ev.homeReport, home: true });
     }
     if (ev.visitArrived) {
       sfx.soft();
@@ -437,13 +438,35 @@ class Store {
     this.bump();
     return g;
   }
+  /** Войти в Изнанку. Основной мир сохраняется; прогресс испытания — тоже, если в нём уже были. */
   startChallenge(id: string) {
+    const resumed = !!this.s.challengeRuns[id];
     const ok = E.startChallenge(this.s, id, Date.now());
     if (ok) {
       sfx.fanfare();
-      this.toast({ icon: CHALLENGE_BY_ID[id].icon, title: `Испытание: ${CHALLENGE_BY_ID[id].name}`, text: 'Удачи, алхимик!', kind: 'warn' });
+      haptic('heavy');
+      this.tab = 'shop';
+      this.toast({
+        icon: CHALLENGE_BY_ID[id].icon,
+        title: `Изнанка: ${CHALLENGE_BY_ID[id].name}`,
+        text: resumed ? 'Испытание продолжается с того же места' : 'Основной мир сохранён. Вернуться можно в любой момент',
+        kind: 'warn',
+      });
       this.save();
     }
+    this.bump();
+  }
+
+  /** Вернуться в основной мир: прогресс испытания сохраняется, дома начисляется доход за время отсутствия. */
+  leaveChallenge() {
+    const id = this.s.challenge;
+    if (!id) return;
+    const report = E.leaveChallenge(this.s, Date.now(), true);
+    sfx.soft();
+    haptic('medium');
+    if (report) this.modals.push({ type: 'offline', report, home: true });
+    else this.toast({ icon: 'hut', title: 'Снова дома', text: 'Испытание подождёт — прогресс сохранён', kind: 'info' });
+    this.save();
     this.bump();
   }
   do<T>(fn: (s: GameState, m: E.Mods, now: number, r: E.Rng) => T): T {
