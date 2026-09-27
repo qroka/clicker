@@ -85,27 +85,34 @@ export const sfx = {
 const PENDING_MS = 700;
 const GESTURE_EVENTS = new Set(['click', 'touchend', 'keydown', 'keyup']);
 
-let hapticLabel: HTMLLabelElement | null = null;
 let lastHaptic = 0;
 let pendingAt = 0;
+let flushReady = false;
 
-function ensureHaptic() {
-  if (hapticLabel) return;
+/** Один «щелчок»: свежий скрытый <label><input switch></label>, клик по нему и удаление (как в ios-haptics). */
+function tick() {
   const label = document.createElement('label');
   label.setAttribute('aria-hidden', 'true');
+  label.dataset.haptic = '';
   label.style.display = 'none';
   const input = document.createElement('input');
   input.type = 'checkbox';
   input.setAttribute('switch', '');
   label.appendChild(input);
-  document.body.appendChild(label);
-  hapticLabel = label;
+  document.head.appendChild(label);
+  label.click();
+  label.remove();
+}
+
+function ensureFlush() {
+  if (flushReady) return;
+  flushReady = true;
   // Отложенный отклик проигрываем в момент, когда iOS считает событие жестом
   const flush = (e: Event) => {
-    if (!pendingAt || (e.target instanceof Node && label.contains(e.target))) return;
+    if (!pendingAt || (e.target instanceof Element && e.target.closest('[data-haptic]'))) return;
     const fresh = performance.now() - pendingAt < PENDING_MS;
     pendingAt = 0;
-    if (fresh) label.click();
+    if (fresh) tick();
   };
   for (const type of ['touchend', 'click']) document.addEventListener(type, flush, { capture: true, passive: true });
 }
@@ -125,11 +132,17 @@ export function haptic(kind: 'light' | 'medium' | 'heavy' = 'light') {
     navigator.vibrate(kind === 'heavy' ? 30 : kind === 'medium' ? 15 : 8);
     return;
   }
-  ensureHaptic();
+  ensureFlush();
   if (inGesture()) {
     pendingAt = 0;
-    hapticLabel!.click();
+    tick();
   } else pendingAt = now;
+}
+
+/** Для проверки в настройках: щелчок прямо сейчас, в обход настройки и антидребезга. */
+export function hapticTest() {
+  if (typeof navigator.vibrate === 'function') navigator.vibrate(20);
+  else tick();
 }
 
 // ─── Частицы ─────────────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ import { TEXTS } from '../data/texts';
 import { fmt, fmtTime, pct, plural } from './format';
 import { RARITY_LABEL, ROLE_LABEL, bonusText } from './labels';
 import { Portrait } from './tabs/Guild';
-import { burst } from './fx';
+import { burst, hapticTest } from './fx';
 import type { LocationId } from '../core/types';
 import { Ic, Px } from './Px';
 import { CloseButton, Cta, Glyph, Row, Section, Segments, StateBox } from './kit';
@@ -401,6 +401,35 @@ function Toggle({ on, onClick, label }: { on: boolean; onClick: () => void; labe
   return <button class={`toggle ${on ? 'on' : ''}`} onClick={onClick} role="switch" aria-checked={on} aria-label={label} />;
 }
 
+/** Проверка вибрации: системный переключатель (его щелчок проигрывает сама iOS) и щелчок из кода игры. */
+function HapticCheck() {
+  const ua = navigator.userAgent;
+  const ios = ua.match(/OS (\d+)_(\d+)/);
+  const standalone = (navigator as Navigator & { standalone?: boolean }).standalone;
+  const env = [
+    ios ? `iOS ${ios[1]}.${ios[2]}` : 'не iOS',
+    standalone ? 'приложение' : 'браузер',
+    typeof navigator.vibrate === 'function' ? 'vibrate есть' : 'vibrate нет',
+  ].join(' · ');
+  return (
+    <div class="haptic-check">
+      <p class="hint">
+        Нет вибрации? Переключи системный тумблер: если iPhone не щёлкнул, вибрация для сайтов выключена в iOS (Настройки → Звуки, тактильные сигналы → Системные тактильные сигналы) или версия iOS ниже 18.
+      </p>
+      <div class="row">
+        <label class="native">
+          <input type="checkbox" {...({ switch: true } as Record<string, unknown>)} />
+          Системный
+        </label>
+        <button class="btn2" onClick={() => hapticTest()}>
+          Щелчок из игры
+        </button>
+      </div>
+      <small class="t3">{env}</small>
+    </div>
+  );
+}
+
 function Settings() {
   const st = useStore();
   const s = st.s;
@@ -588,6 +617,7 @@ function Settings() {
           <span class="grow">Вибрация</span>
           <Toggle label="Вибрация" on={s.settings.haptics} onClick={() => set('haptics')} />
         </div>
+        <HapticCheck />
         <div class="setting">
           <Ic id="numbers" scale={2} />
           <span class="grow">Числа</span>

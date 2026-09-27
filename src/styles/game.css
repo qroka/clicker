@@ -668,6 +668,24 @@ button.lrow:active {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.chapter .goal {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-3);
+}
+.chapter .goal .num {
+  font: 500 15px var(--px);
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.chapter .goal b {
+  color: var(--gold);
+  font-weight: 600;
+}
 .chapter .pc {
   font: 500 15px var(--px);
   color: var(--text-2);
@@ -1935,4 +1953,35 @@ textarea.code:focus {
       0 4px 14px rgba(0, 0, 0, 0.35),
       0 0 0 2px rgba(242, 184, 75, 0.45);
   }
+}
+
+/* ─── Проверка вибрации в меню ─── */
+.haptic-check {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--bg-2);
+}
+.haptic-check .row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.haptic-check .native {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  font: 600 14px var(--ui);
+}
+.haptic-check input {
+  accent-color: var(--gold);
+  width: 44px;
+  height: 26px;
+  margin: 0;
+}
+.haptic-check small {
+  font-size: 12px;
 }
