@@ -76,22 +76,44 @@ export const sfx = {
 };
 
 // ─── Тактильный отклик ───────────────────────────────────────────────────────
-// На iOS 18+ Safari клик по <label> со <input switch> вызывает системную «тапку» Taptic Engine.
+// iOS Safari не поддерживает navigator.vibrate (ни во вкладке, ни в PWA). Обходной путь для iOS 18+:
+// клик по <label> со скрытым <input switch> проигрывает системную «тапку» Taptic Engine.
+// Но WebKit делает это только внутри жеста пользователя (touchend / click), а котёл
+// реагирует на pointerdown — там отклик молча отбрасывался. Поэтому вне жеста отклик
+// откладываем до ближайшего touchend/click (не дольше PENDING_MS).
+
+const PENDING_MS = 700;
+const GESTURE_EVENTS = new Set(['click', 'touchend', 'keydown', 'keyup']);
 
 let hapticLabel: HTMLLabelElement | null = null;
 let lastHaptic = 0;
+let pendingAt = 0;
 
 function ensureHaptic() {
   if (hapticLabel) return;
   const label = document.createElement('label');
   label.setAttribute('aria-hidden', 'true');
-  label.style.cssText = 'position:fixed;left:-100px;top:-100px;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';
+  label.style.display = 'none';
   const input = document.createElement('input');
   input.type = 'checkbox';
   input.setAttribute('switch', '');
   label.appendChild(input);
   document.body.appendChild(label);
   hapticLabel = label;
+  // Отложенный отклик проигрываем в момент, когда iOS считает событие жестом
+  const flush = (e: Event) => {
+    if (!pendingAt || (e.target instanceof Node && label.contains(e.target))) return;
+    const fresh = performance.now() - pendingAt < PENDING_MS;
+    pendingAt = 0;
+    if (fresh) label.click();
+  };
+  for (const type of ['touchend', 'click']) document.addEventListener(type, flush, { capture: true, passive: true });
+}
+
+/** Сейчас обрабатывается событие, которое iOS считает жестом пользователя. */
+function inGesture(): boolean {
+  const ev = (window as unknown as { event?: Event }).event;
+  return !!ev && GESTURE_EVENTS.has(ev.type);
 }
 
 export function haptic(kind: 'light' | 'medium' | 'heavy' = 'light') {
@@ -99,13 +121,15 @@ export function haptic(kind: 'light' | 'medium' | 'heavy' = 'light') {
   const now = performance.now();
   if (now - lastHaptic < 55) return;
   lastHaptic = now;
-  if (navigator.vibrate) {
+  if (typeof navigator.vibrate === 'function') {
     navigator.vibrate(kind === 'heavy' ? 30 : kind === 'medium' ? 15 : 8);
     return;
   }
   ensureHaptic();
-  hapticLabel!.click();
-  if (kind === 'heavy') setTimeout(() => hapticLabel?.click(), 90);
+  if (inGesture()) {
+    pendingAt = 0;
+    hapticLabel!.click();
+  } else pendingAt = now;
 }
 
 // ─── Частицы ─────────────────────────────────────────────────────────────────
